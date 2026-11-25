@@ -621,7 +621,7 @@ function openTV() {
   lastFocus = document.activeElement; $('#tv').hidden = false; document.body.style.overflow = 'hidden'; $('#tv-x').focus();
   let seed = parseInt(R.fid.replace(/ /g, '').slice(8, 16), 16) || 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const seg = segments(), prem = seg.includes('premium_device') ? 1.6 : 1;
-  const bidders = ['DSP-1 · retail', 'DSP-2 · travel', 'DSP-3 · fintech', 'DSP-4 · gaming', 'DSP-5 · retargeting', 'DSP-6 · B2B software'].map(n => [n, +((0.2 + rnd() * 3.2) * prem).toFixed(2)]);
+  const bidders = ['Google DV360 · display', 'Meta Audience Network · social', 'Amazon DSP · retail', 'Criteo · retargeting', 'The Trade Desk · programmatic', 'Yandex Direct · CIS'].map(n => [n, +((0.2 + rnd() * 3.2) * prem).toFixed(2)]);
   const sorted = [...bidders].sort((a, b) => b[1] - a[1]), clear = +(sorted[1][1] + 0.01).toFixed(2);
   const L = [
     ['dim', '> incoming page view'],

@@ -427,3 +427,10 @@ body.caught .tint{--tc:rgba(229,72,77,.2)}
 }
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.bt span{transform:none}#ridges path{stroke-dashoffset:0}.reveal{opacity:1;translate:0 0}.pt{display:none}}
+
+/* company logos */
+.logo-row{display:flex;flex-wrap:wrap;gap:12px 20px;margin:20px 0 6px}
+.co{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:var(--mute);white-space:nowrap}
+.co svg{width:28px;height:28px;border-radius:7px;flex:none;box-shadow:0 4px 12px -6px rgba(0,0,0,.3)}
+.co b{font-weight:600}
+@media (prefers-color-scheme:dark){.co svg{box-shadow:0 4px 12px -6px rgba(0,0,0,.6)}}

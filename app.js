@@ -248,7 +248,7 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  const steps = [() => drawPrint(hash), particles, marquee, dossier, weights, worthCalc, whatifInit, incogInit, qrGen, compareFromHash, adsInit, youTip, motionInit];
+  const steps = [burstIn, () => drawPrint(hash), particles, marquee, dossier, weights, worthCalc, whatifInit, incogInit, qrGen, compareFromHash, adsInit, youTip, motionInit];
   const idle = window.requestIdleCallback || (f => setTimeout(f, 1));
   await new Promise(done => { const next = () => { const f = steps.shift(); if (!f) return done(); f(); idle(next, { timeout: 120 }); }; next(); });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
@@ -517,8 +517,8 @@ $('#otherid').addEventListener('input', e => {
   const v = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, ''), me = (R.fid || '').replace(/ /g, ''), box = $('#verdict');
   document.body.classList.remove('caught');
   if (v.length < 16) { box.className = 'verdict'; box.textContent = v.length ? `${16 - v.length} more characters…` : 'Waiting for the second ID'; return; }
-  if (v.slice(0, 16) === me) { box.className = 'verdict same'; box.textContent = 'Same ID. Private mode did not hide you.'; document.body.classList.add('caught'); chime(); }
-  else if (v.slice(0, 16) === (R.hwid || '').replace(/ /g, '')) { box.className = 'verdict same'; box.textContent = 'Same hardware ID. Switching browsers did not hide your device.'; document.body.classList.add('caught'); chime(); }
+  if (v.slice(0, 16) === me) { box.className = 'verdict same'; box.textContent = 'Same ID. Private mode did not hide you.'; document.body.classList.add('caught'); chime(); caughtWave(); }
+  else if (v.slice(0, 16) === (R.hwid || '').replace(/ /g, '')) { box.className = 'verdict same'; box.textContent = 'Same hardware ID. Switching browsers did not hide your device.'; document.body.classList.add('caught'); chime(); caughtWave(); }
   else { box.className = 'verdict diff'; box.textContent = 'Different ID. Your browser is resisting fingerprinting. Nice.'; }
 });
 function compareFromHash() {
@@ -581,8 +581,11 @@ function weights() {
   const total = rows.reduce((a, x) => a + x.b, 0);
   // green for weak signals, red for the ones that single you out
   const hue = b => Math.round(145 - Math.min(1, b / 14) * 145);
-  $('#bars').innerHTML = sorted.map(x => `<div class="bar${x.r < .5 ? ' off' : ''}"><span class="bn">${esc(x.name)}${x.studied ? ' <i title="Measured in EFF Panopticlick">●</i>' : ''}</span><span class="bt"><span style="--w:${(x.b / 14 * 100).toFixed(1)}%;background:linear-gradient(90deg,hsl(${hue(x.b) + 25} 80% 52%),hsl(${hue(x.b)} 78% 50%))"></span></span><span class="bv">≈ ${x.b} bits</span></div>`).join('')
+  $('#bars').innerHTML = sorted.map(x => `<div class="barw"><button class="bar${x.r < .5 ? ' off' : ''}" aria-expanded="false" data-k="${x.k}"><span class="bn"><i class="chev" aria-hidden="true">›</i>${esc(x.name)}${x.studied ? ' <i title="Measured in EFF Panopticlick">●</i>' : ''}</span><span class="bt"><span style="--w:${(x.b / 14 * 100).toFixed(1)}%;background:linear-gradient(90deg,hsl(${hue(x.b) + 25} 80% 52%),hsl(${hue(x.b)} 78% 50%))"></span></span><span class="bv">≈ ${x.b} bits</span></button><div class="bar-x" hidden><div class="bx-v"><span>Your value</span><b>${esc(sigValue(x.k))}</b></div><pre><code>${esc(SIGCODE[x.k] || '')}</code></pre></div></div>`).join('')
     + `<div class="bar total"><span class="bn">Plain sum</span><span class="bt"><span style="--w:100%"></span><i class="b33" style="left:${(33 / total * 100).toFixed(1)}%" title="33 bits: one person on Earth">33</i></span><span class="bv">≈ <b id="bitsum">0</b> bits</span></div>`;
+  $('#bars').querySelectorAll('button.bar').forEach(b => b.onclick = () => {
+    const x = b.nextElementSibling, open = x.hidden; x.hidden = !open; b.setAttribute('aria-expanded', open); b.classList.toggle('open', open); click();
+  });
   onceVisible($('#bars'), () => tween(0, total, 1600, v => { $('#bitsum').textContent = Math.round(v); }), .4);
   const top = [...rows].sort((a, b) => b.score - a.score).slice(0, 3);
   $('#top3').innerHTML = top.map(x => `<li><b>${esc(x.name)}</b><span class="tw">${esc(x.why || '≈ ' + x.b + ' bits')}</span><p>${esc(TIPS[x.k] || 'Browsers with fingerprinting protection blur this signal.')}</p><button class="fix" data-k="${x.k}">Fix this →</button></li>`).join('');
@@ -968,5 +971,97 @@ function motionInit() {
   // weight bars: one shimmer pass after they grow
   onceVisible($('#bars'), () => setTimeout(() => $('#bars').classList.add('shine'), 1200), .3);
 }
+
+// ---------- your own value for each signal ----------
+const SIGCODE = {
+  fonts: "ctx.font = '72px \"Calibri\", monospace';\nctx.measureText('mmmmlli1WwQ').width  // differs → installed",
+  browser: "navigator.userAgentData.getHighEntropyValues(['fullVersionList'])",
+  canvas: "ctx.fillText('Cwm fjordbank glyphs 😃', 4, 46);\nsha256(canvas.toDataURL())",
+  gpu: "gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)",
+  lang: "navigator.languages",
+  audio: "new OfflineAudioContext(1, 5000, 44100)  // oscillator → compressor\nsum(|samples|)",
+  screen: "screen.width; screen.height; devicePixelRatio; screen.colorDepth",
+  voices: "speechSynthesis.getVoices()",
+  tz: "Intl.DateTimeFormat().resolvedOptions().timeZone",
+  hw: "navigator.hardwareConcurrency; navigator.deviceMemory",
+  emoji: "ctx.fillText('😀👍🏽🇺🇦🧑‍💻', 2, 4); sha256(canvas.toDataURL())",
+  os: "navigator.userAgentData.getHighEntropyValues(['platformVersion', 'architecture'])",
+  keyboard: "(await navigator.keyboard.getLayoutMap()).get('KeyQ')",
+  webgpu: "(await navigator.gpu.requestAdapter()).info",
+  intl: "new Intl.NumberFormat().format(1234567.89)",
+  gl: "gl.getSupportedExtensions(); gl.getParameter(gl.MAX_TEXTURE_SIZE)",
+  codecs: "video.canPlayType('video/mp4; codecs=\"hvc1\"')",
+  media: "navigator.mediaDevices.enumerateDevices()  // counted, no prompt",
+  display: "matchMedia('(color-gamut: p3)'); matchMedia('(dynamic-range: high)')",
+  timer: "performance.now()  // smallest tick",
+  input: "navigator.maxTouchPoints; matchMedia('(pointer: fine)')",
+  prefs: "matchMedia('(prefers-color-scheme: dark)')",
+  math: "Math.tan(-1e300); Math.sinh(1)  // last digits vary",
+  pdf: "navigator.pdfViewerEnabled"
+};
+function sigValue(k) {
+  const d = R.dev;
+  switch (k) {
+    case 'fonts': return `${R.fl.length} found: ${R.fl.slice(0, 10).join(', ')}${R.fl.length > 10 ? '…' : ''}`;
+    case 'browser': return R.browser;
+    case 'canvas': return `hash ${R.cv.hash}${R.noise.canvas ? ' (randomized)' : ''}`;
+    case 'gpu': return R.g.renderer;
+    case 'lang': return R.langs.join(', ');
+    case 'audio': return `signal ${R.au.sum}${R.noise.audio ? ' (randomized)' : ''}`;
+    case 'screen': return `${R.scr.w}×${R.scr.h} @${R.scr.dpr}x · ${R.scr.depth}-bit color`;
+    case 'voices': return R.vl.length ? `${R.vl.length}: ${R.vl.slice(0, 4).map(v => v.name).join(', ')}${R.vl.length > 4 ? '…' : ''}` : 'none exposed';
+    case 'tz': return `${R.tz.timeZone} · UTC${R.off >= 0 ? '+' : ''}${R.off}`;
+    case 'hw': return `${navigator.hardwareConcurrency || '?'} threads · ${navigator.deviceMemory ? navigator.deviceMemory + ' GB+ RAM' : 'RAM hidden'}`;
+    case 'emoji': return `hash ${R.em.hash}`;
+    case 'os': return R.os;
+    case 'keyboard': return R.kb;
+    case 'webgpu': return R.wg;
+    case 'intl': return R.it;
+    case 'gl': return `${R.g.exts} extensions · max texture ${R.g.maxTex}`;
+    case 'codecs': return R.cd.join(' · ') || 'none reported';
+    case 'media': return d ? `${d.cams} cameras · ${d.mics} mics · ${d.spk} speakers` : 'hidden';
+    case 'display': return R.dc;
+    case 'timer': return R.tr;
+    case 'input': return `${navigator.maxTouchPoints} touch points · ${mq('(pointer:fine)') ? 'mouse/trackpad' : 'touch'}`;
+    case 'prefs': return `${mq('(prefers-color-scheme: dark)') ? 'dark' : 'light'} mode · motion ${RM() ? 'reduced' : 'full'}`;
+    case 'math': return mathPrint();
+    case 'pdf': return String(navigator.pdfViewerEnabled);
+    default: return '';
+  }
+}
+
+// ---------- hero: your values fly in and become the print ----------
+function burstIn() {
+  if (RM()) return;
+  const box = $('#burst');
+  const vals = [shortGpu(R.g.renderer), R.tz.timeZone, `${R.scr.w}×${R.scr.h}`, `${R.fl.length} fonts`, R.langs[0], `${navigator.hardwareConcurrency} threads`, 'canvas ' + R.cv.hash, R.os.split(' ')[0], R.browser.split(',')[0], `UTC${R.off >= 0 ? '+' : ''}${R.off}`, R.kb.split(' ')[0], `${R.vl.length} voices`, R.dc.split(' ')[0], 'audio ' + R.au.sum.slice(0, 6)];
+  box.innerHTML = vals.map((v, i) => {
+    const ang = (i / vals.length) * Math.PI * 2 + .2, r = 62 + (i % 3) * 8;
+    const sx = Math.cos(ang) * r, sy = Math.sin(ang) * r;
+    return `<span class="bp" style="--sx:${sx.toFixed(1)}vmin;--sy:${sy.toFixed(1)}vmin;--d:${(i * 70)}ms">${esc(String(v).slice(0, 20))}</span>`;
+  }).join('');
+  box.classList.add('go');
+  setTimeout(() => { document.querySelector('.print').classList.add('absorb'); }, 900 + vals.length * 70);
+  setTimeout(() => { box.innerHTML = ''; box.classList.remove('go'); }, 2600 + vals.length * 70);
+}
+
+// ---------- caught: one red scan sweeps the screen ----------
+let caughtDone = false;
+function caughtWave() {
+  if (RM() || caughtDone) return; caughtDone = true;
+  const c = $('#catch'); c.classList.remove('go'); void c.offsetWidth; c.classList.add('go');
+  navigator.vibrate && navigator.vibrate([60, 40, 120]);
+}
+
+// logo sources show in a caption line under the marquee
+(() => {
+  const cap = $('#co-cap'), def = cap.textContent;
+  document.querySelectorAll('a.co').forEach(a => {
+    const on = () => { cap.textContent = a.querySelector('b').textContent + ': ' + a.title + ' ↗'; cap.classList.add('on'); };
+    const off = () => { cap.textContent = def; cap.classList.remove('on'); };
+    a.addEventListener('mouseenter', on); a.addEventListener('focus', on);
+    a.addEventListener('mouseleave', off); a.addEventListener('blur', off);
+  });
+})();
 
 run().catch(e => { console.error(e); $('#scanstate').textContent = 'error'; $('#idmeta').textContent = e.message; });

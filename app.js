@@ -1,6 +1,6 @@
 // mirror. shows what any website can read about your browser without cookies.
 // Everything runs locally. Nothing is stored and nothing is sent anywhere.
-const $ = s => document.querySelector(s);
+const $ = s => document.querySelector(s) || document.createElement('span');
 const t0 = performance.now();
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let slept = 0;
@@ -235,7 +235,7 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); bento(); dossier(); weights(); worthCalc(); scanAnim(); whatifInit(); incogInit(); qrGen();
+  drawPrint(hash); particles(); marquee(); dossier(); weights(); worthCalc(); scanAnim(); whatifInit(); incogInit(); qrGen();
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }

@@ -38,7 +38,7 @@
       <svg viewBox="0 0 32 32" width="30" height="30"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b6cff"/><stop offset="1" stop-color="#22c3ee"/></linearGradient></defs><circle cx="16" cy="16" r="15" fill="url(#lg)"/><path d="M8.5 17.5a7.5 7.5 0 0 1 15 0M11.5 18.5a4.5 4.5 0 0 1 9 0M16 18.5v6M6 12.5a11 11 0 0 1 20 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
       <b>mirror<i>.</i></b>
     </a>
-    <div class="links"><a href="#signals">What it sees</a><a href="#dossier">Your profile</a><a href="#test">Private test</a><a href="#who">Who uses it</a><a href="#hide">How to hide</a><a id="ghlink" href="https://github.com/leopardracer/mirror" target="_blank" rel="noopener">GitHub</a></div> <button class="hbtn" id="tvbtn" aria-haspopup="dialog">Tracker view</button>
+    <div class="links"><a href="#dossier">Your profile</a><a href="#test">Private test</a><a href="#who">Who uses it</a><a href="#hide">How to hide</a><a id="ghlink" href="https://github.com/leopardracer/mirror" target="_blank" rel="noopener">GitHub</a></div> <button class="hbtn" id="tvbtn" aria-haspopup="dialog">Tracker view</button>
     <button class="hbtn icon" id="snd" aria-pressed="false" aria-label="Turn sound on"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button>
     <span class="live" title="Requests this page has made to any other server"><span class="pulse" aria-hidden="true"></span>Sent to servers: <b id="netcount">0</b></span>
   </nav>
@@ -87,76 +87,7 @@
     </div>
   </section>
 
-  <div class="marquee" aria-hidden="true"><div class="mq-track" id="mq"></div></div>
 
-  <section class="band" id="signals">
-    <h2>What <em>every</em> website can read about you.</h2>
-    <p class="sub">Collected on this page in <b id="ms">…</b> without asking for a single permission. These are your real values.</p>
-    <div class="bento" id="bento">
-      <article class="tile t-gpu reveal">
-        <div class="tile-h"><h3>Graphics card</h3><span class="lvl hi">very identifying</span></div>
-        <div class="gpu-row">
-          <svg class="chip-svg" aria-hidden="true" viewBox="0 0 120 120"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b2f63"/><stop offset="1" stop-color="#11143a"/></linearGradient><linearGradient id="cg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b6cff"/><stop offset="1" stop-color="#22c3ee"/></linearGradient></defs><g stroke="#b8c2ff" stroke-width="3" stroke-linecap="round" id="pins"></g><rect x="22" y="22" width="76" height="76" rx="12" fill="url(#cg)"/><rect x="34" y="34" width="52" height="52" rx="8" fill="url(#cg2)" opacity=".9"/><path d="M42 60h36M60 42v36" stroke="#ffffff70" stroke-width="2"/></svg>
-          <div><div class="big" id="v-gpu">…</div><div class="val" id="v-gpu2"></div></div>
-        </div>
-        <p class="why">Read through WebGL. Your exact GPU and driver are among the strongest identifiers there are.</p>
-        <details class="how"><summary>How it's read</summary><pre><code>const gl = canvas.getContext('webgl');
-const ext = gl.getExtension('WEBGL_debug_renderer_info');
-gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);</code></pre></details>
-      </article>
-
-      <article class="tile t-fonts reveal">
-        <div class="tile-h"><h3>Installed fonts <span class="count" id="v-fontn"></span></h3><span class="lvl hi">very identifying</span></div>
-        <div class="fontwall" id="fontwall"></div>
-        <p class="why">Each name above is written in that font, straight from your computer. Apps bring fonts with them, so this list hints at what you use.</p>
-        <details class="how"><summary>How it's read</summary><pre><code>ctx.font = '72px "Calibri", monospace';
-const w = ctx.measureText('mmmmlli1WwQ').width;
-// width differs from plain monospace → font is installed</code></pre></details>
-      </article>
-
-      <article class="tile t-canvas reveal">
-        <div class="tile-h"><h3>Hidden canvas</h3><span class="lvl hi">very identifying</span></div>
-        <div class="canvas-badge" id="cvnoise" hidden>Noise detected · left out of ID</div>
-        <div class="canvas-view"><img id="v-canvas" width="300" height="80" alt="The image this page secretly drew on your device"></div>
-        <div class="val" id="v-canvash"></div>
-        <p class="why">The page drew this off-screen. Your GPU, drivers and fonts make its pixels unique.</p>
-        <details class="how"><summary>How it's read</summary><pre><code>ctx.fillText('Cwm fjordbank glyphs 😃', 4, 46);
-ctx.arc(240, 40, 30, 0, 2 * Math.PI);
-sha256(canvas.toDataURL());</code></pre></details>
-      </article>
-
-      <article class="tile t-audio reveal">
-        <div class="tile-h"><h3>Audio fingerprint</h3><span class="lvl hi">very identifying</span></div>
-        <canvas class="wave" id="v-wave" width="600" height="160" role="img" aria-label="Waveform of the audio signal your device produced"></canvas>
-        <div class="val" id="v-audio"></div>
-        <p class="why">A silent sound was processed offline. Your audio stack rounds the numbers its own way.</p>
-        <details class="how"><summary>How it's read</summary><pre><code>const ctx = new OfflineAudioContext(1, 5000, 44100);
-oscillator → compressor → ctx.startRendering();
-sum(|samples 4500…5000|)  // differs per audio stack</code></pre></details>
-      </article>
-
-      <article class="tile t-tz reveal">
-        <div class="tile-h"><h3>Time zone</h3><span class="lvl md">identifying</span></div>
-        <div class="tz-row">
-          <svg class="globe" viewBox="0 0 120 120" id="globe" aria-hidden="true"></svg>
-          <div><div class="big" id="v-tz">…</div><div class="val" id="v-tz2"></div></div>
-        </div>
-        <p class="why">Narrows down where you are, even behind a VPN.</p>
-        <details class="how"><summary>How it's read</summary><pre><code>Intl.DateTimeFormat().resolvedOptions().timeZone;
-new Date().getTimezoneOffset();</code></pre></details>
-      </article>
-
-      <article class="tile t-screen reveal">
-        <div class="tile-h"><h3>Screen</h3><span class="lvl md">identifying</span></div>
-        <div class="screen-row"><div class="device" id="device"><span id="v-screen"></span></div></div>
-        <div class="val" id="v-screen2"></div>
-        <details class="how"><summary>How it's read</summary><pre><code>screen.width; screen.height;
-devicePixelRatio; screen.colorDepth;</code></pre></details>
-      </article>
-
-      <div class="smalls" id="smalls"></div>
-    </div>
-  </section>
 
   <section class="band" id="weight">
     <h2>How much each signal <em>gives away.</em></h2>

@@ -248,7 +248,9 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); dossier(); weights(); worthCalc(); whatifInit(); incogInit(); qrGen(); compareFromHash(); adsInit(); youTip(); motionInit();
+  const steps = [() => drawPrint(hash), particles, marquee, dossier, weights, worthCalc, whatifInit, incogInit, qrGen, compareFromHash, adsInit, youTip, motionInit];
+  const idle = window.requestIdleCallback || (f => setTimeout(f, 1));
+  await new Promise(done => { const next = () => { const f = steps.shift(); if (!f) return done(); f(); idle(next, { timeout: 120 }); }; next(); });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }

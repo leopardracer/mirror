@@ -235,7 +235,7 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); bento(); dossier(); vsInit(); weights(); madeStats(); worthCalc(); whatifInit(); incogInit(); qrGen(); trailInit(); scanAnim(); i18nInit();
+  drawPrint(hash); particles(); marquee(); bento(); dossier(); vsInit(); weights(); madeStats(); worthCalc(); whatifInit(); incogInit(); qrGen(); trailInit(); scanAnim();
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }
@@ -843,85 +843,6 @@ function scanAnim() {
     });
   }, { threshold: .1 });
   sio.observe(bento);
-}
-
-// ---------- i18n (item 15) ----------
-const I18N = {
-  en: {},
-  ru: {
-    worth_h: 'Сколько <em>вы стоите.</em>',
-    worth_sub: 'Рекламные сети продают доступ к вам на каждой странице. Вот сколько это набегает.',
-    worth_pages: 'Страниц в день',
-    worth_cpm: 'Средний CPM',
-    worth_year: 'В год',
-    worth_note: 'Столько зарабатывают рекламные сети на отслеживании <em>одного человека</em> на <em>одном устройстве</em>. С телефоном и планшетом — в 2–3 раза больше.',
-    tl_h: 'Как вас <em>узнают.</em>',
-    tl_1: 'Первый визит', tl_1d: 'Сайт читает ваши сигналы и сохраняет хэш.',
-    tl_2: 'Отпечаток сохранён', tl_2d: 'Привязан к вашему поведению на сайте.',
-    tl_3: 'Другой сайт', tl_3d: 'Читает те же сигналы, получает тот же хэш.',
-    tl_4: 'Профили связаны', tl_4d: 'Два сайта обмениваются данными через рекламную сеть.',
-    tl_5: 'Узнают везде', tl_5d: 'Каждый партнёрский сайт знает, кто вы.',
-    wi_h: 'А если <em>отключить сигналы?</em>',
-    wi_sub: 'Переключайте сигналы и смотрите, как меняется ваша уникальность.',
-    wi_you: 'Вы',
-    wi_hint: '33 бита = 1 из 8 миллиардов (все люди на Земле)',
-    inc_normal: 'Обычный', inc_private: 'Инкогнито',
-    inc_cookies: 'Куки', inc_history: 'История', inc_fp: 'Отпечаток', inc_ip: 'IP-адрес', inc_hw: 'Железо',
-    qr_text: 'Отсканируйте телефоном, чтобы сравнить ID на разных устройствах.',
-    nav_signals: 'Что видят', nav_profile: 'Ваш профиль', nav_test: 'Приватный тест', nav_who: 'Кто это делает', nav_hide: 'Как скрыться',
-    embed_h: 'Встроить на свой сайт',
-  },
-  ua: {
-    worth_h: 'Скільки <em>ви коштуєте.</em>',
-    worth_sub: 'Рекламні мережі продають доступ до вас на кожній сторінці.',
-    worth_pages: 'Сторінок на день',
-    worth_cpm: 'Середній CPM',
-    worth_year: 'За рік',
-    worth_note: 'Стільки рекламні мережі заробляють на відстеженні <em>однієї людини</em> на <em>одному пристрої</em>. З телефоном і планшетом — у 2–3 рази більше.',
-    tl_h: 'Як вас <em>впізнають.</em>',
-    tl_1: 'Перший візит', tl_1d: 'Сайт зчитує ваші сигнали і зберігає хеш.',
-    tl_2: 'Відбиток збережено', tl_2d: 'Прив\'язаний до вашої поведінки на сайті.',
-    tl_3: 'Інший сайт', tl_3d: 'Зчитує ті ж сигнали, отримує той самий хеш.',
-    tl_4: 'Профілі пов\'язані', tl_4d: 'Два сайти обмінюються даними через рекламну мережу.',
-    tl_5: 'Впізнають скрізь', tl_5d: 'Кожен партнерський сайт знає, хто ви.',
-    wi_h: 'А якщо <em>вимкнути сигнали?</em>',
-    wi_sub: 'Перемикайте сигнали і дивіться, як змінюється ваша унікальність.',
-    wi_you: 'Ви',
-    wi_hint: '33 біти = 1 з 8 мільярдів (всі люди на Землі)',
-    inc_normal: 'Звичайний', inc_private: 'Інкогніто',
-    inc_cookies: 'Кукі', inc_history: 'Історія', inc_fp: 'Відбиток', inc_ip: 'IP-адреса', inc_hw: 'Залізо',
-    qr_text: 'Відскануйте телефоном, щоб порівняти ID на різних пристроях.',
-    nav_signals: 'Що бачать', nav_profile: 'Ваш профіль', nav_test: 'Приватний тест', nav_who: 'Хто це робить', nav_hide: 'Як сховатися',
-    embed_h: 'Вбудувати на свій сайт',
-  }
-};
-let curLang = 'en';
-function i18nInit() {
-  try { const s = localStorage.getItem('mirror-lang'); if (s && I18N[s]) curLang = s; } catch(_){}
-  const bl = (navigator.language || '').toLowerCase();
-  if (curLang === 'en') {
-    if (bl.startsWith('uk')) curLang = 'ua';
-    else if (bl.startsWith('ru')) curLang = 'ru';
-  }
-  applyLang(curLang);
-  document.querySelectorAll('.lbtn').forEach(b => {
-    b.onclick = () => { curLang = b.dataset.l; applyLang(curLang); try { localStorage.setItem('mirror-lang', curLang); } catch(_){} };
-  });
-}
-function applyLang(lang) {
-  document.querySelectorAll('.lbtn').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
-  if (lang === 'en') {
-    document.querySelectorAll('[data-i]').forEach(el => { if (el._orig) el.innerHTML = el._orig; });
-    document.documentElement.lang = 'en';
-    return;
-  }
-  const dict = I18N[lang] || {};
-  document.querySelectorAll('[data-i]').forEach(el => {
-    if (!el._orig) el._orig = el.innerHTML;
-    const k = el.dataset.i;
-    if (dict[k]) el.innerHTML = dict[k];
-  });
-  document.documentElement.lang = lang === 'ua' ? 'uk' : lang;
 }
 
 run().catch(e => { console.error(e); $('#scanstate').textContent = 'error'; $('#idmeta').textContent = e.message; });

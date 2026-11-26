@@ -426,10 +426,10 @@ body.caught .tint{--tc:rgba(229,72,77,.2)}
   .tint[data-z=signals]{--tc:rgba(123,108,255,.16)}.tint[data-z=dossier]{--tc:rgba(255,170,60,.09)}
 }
 
-/* language switcher */
-.lang-sw{display:flex;gap:2px;background:#eef0fb;border-radius:999px;padding:2px}
-.lbtn{border:none;background:transparent;border-radius:999px;padding:5px 10px;font-weight:700;font-size:12px;cursor:pointer;color:var(--mute);min-height:28px}
-.lbtn.on{background:var(--ink);color:#fff}
+
+
+
+
 
 /* worth calculator (item 1) */
 .worth-calc{margin-top:28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center}
@@ -511,10 +511,10 @@ body.caught .tint{--tc:rgba(229,72,77,.2)}
   .wi-toggles{grid-template-columns:1fr}
   .tl-track{flex-wrap:wrap;gap:8px}.tl-line{width:30px}.tl-step{min-width:0;flex:1 1 40%}
   .qr-block{flex-direction:column;text-align:center}
-  .lang-sw{gap:1px}.lbtn{padding:4px 8px;font-size:11px}
+  
 }
 @media (prefers-color-scheme:dark){
-  .lang-sw{background:#1a1e48}
+  
   .wi-tog{background:#12153299;border-color:#ffffff12}
   .embed-block{background:#12152f;border-color:#ffffff12}
   .tl-dot{box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--a2)}

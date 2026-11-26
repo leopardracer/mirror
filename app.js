@@ -179,7 +179,23 @@ async function run() {
   const langs = navigator.languages?.length ? [...navigator.languages] : [navigator.language];
   const off = -new Date().getTimezoneOffset() / 60;
 
-  R = { g, tz, scr, cv, au, em, fl, vl, dev, browser, os, quota, langs, off, hi, wg, cd, kb, tr, dc, it, noise: { canvas: cvNoise, audio: auNoise, emoji: emNoise } };
+  // WebRTC local IP (item 10)
+  let rtcIP = 'hidden';
+  try {
+    const pc = new RTCPeerConnection({iceServers:[]});
+    pc.createDataChannel('');
+    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    await new Promise(r => { pc.onicecandidate = e => { if (!e.candidate) r(); else { const m = e.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/); if (m && !m[1].startsWith('0.')) rtcIP = m[1]; } }; setTimeout(r, 1200); });
+    pc.close();
+  } catch(_){}
+  // Battery (item 11)
+  let battery = 'not available';
+  try { if (navigator.getBattery) { const b = await navigator.getBattery(); battery = `${Math.round(b.level*100)}%${b.charging ? ' · charging' : ''}`; } } catch(_){}
+  // Connection (item 12)
+  let conn = 'not available';
+  try { const c = navigator.connection || navigator.mozConnection; if (c) conn = `${c.effectiveType || '?'}${c.downlink ? ' · ' + c.downlink + ' Mbps' : ''}${c.rtt ? ' · ' + c.rtt + 'ms RTT' : ''}`; } catch(_){}
+
+  R = { g, tz, scr, cv, au, em, fl, vl, dev, browser, os, quota, langs, off, hi, wg, cd, kb, tr, dc, it, rtcIP, battery, conn, noise: { canvas: cvNoise, audio: auNoise, emoji: emNoise } };
 
   // stable signals only, so a private window produces the same ID
   const idParts = [
@@ -219,7 +235,7 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); bento(); dossier(); vsInit(); weights(); madeStats();
+  drawPrint(hash); particles(); marquee(); bento(); dossier(); vsInit(); weights(); madeStats(); worthCalc(); whatifInit(); incogInit(); qrGen(); trailInit(); scanAnim(); i18nInit();
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }
@@ -333,6 +349,9 @@ function bento() {
     ['Timer precision', R.tr, 'lo', 'Browsers blur clocks by different amounts.', 'performance.now()  // smallest tick'],
     ['Display', R.dc, 'lo', 'Wide-color and HDR screens are less common.', "matchMedia('(color-gamut: p3)')\nmatchMedia('(dynamic-range: high)')"],
     ['Number & date format', R.it, 'md', 'Your regional settings, readable without asking.', 'new Intl.NumberFormat().format(1234567.89)'],
+    ['WebRTC local IP', R.rtcIP || 'hidden', 'md', 'Your local network address, readable without permission in some browsers. Not used in your ID.', "new RTCPeerConnection()\n.onicecandidate → local IP"],
+    ['Battery', R.battery || 'not available', 'lo', 'Level and charging state hint at your device type. Not used in your ID.', 'navigator.getBattery()\n.then(b => b.level)'],
+    ['Connection', R.conn || 'not available', 'lo', 'Network type and speed. Not used in your ID.', 'navigator.connection.effectiveType'],
     ['Storage quota', R.quota ? `${(R.quota / 1e9).toFixed(1)} GB` : 'hidden', 'md', 'Hints at free disk space. Not used in your ID.', 'navigator.storage.estimate()'],
     ['Do Not Track', navigator.doNotTrack === '1' ? 'on' : 'off', 'lo', 'Ironically, turning it on makes you rarer. Not used in your ID.', 'navigator.doNotTrack'],
   ];
@@ -711,5 +730,198 @@ try {
 
 let tt;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 3400); }
+
+
+// ---------- worth calculator (item 1) ----------
+function worthCalc() {
+  const sl = $('#w-pages'), pv = $('#w-pv'), yr = $('#w-year'), num = $('#w-num'), dol = $('#w-dollar');
+  const CPM = 2;
+  function calc() {
+    const p = +sl.value; pv.textContent = p;
+    const v = (p * CPM / 1000 * 365).toFixed(2);
+    yr.textContent = '$' + v; num.textContent = Math.round(+v);
+  }
+  sl.oninput = calc; calc();
+}
+
+// ---------- what-if slider (item 6) ----------
+function whatifInit() {
+  const keys = R.idParts.filter(k => WT[k]);
+  const box = $('#wi-toggles');
+  const state = {};
+  keys.forEach(k => { state[k] = true; });
+  function render() {
+    box.innerHTML = keys.map(k => {
+      const [b, name] = WT[k];
+      return `<label class="wi-tog"><input type="checkbox" data-k="${k}" ${state[k] ? 'checked' : ''}><span>${esc(name)}</span><span class="wi-bits">${b}b</span></label>`;
+    }).join('');
+    box.querySelectorAll('input').forEach(cb => cb.onchange = () => { state[cb.dataset.k] = cb.checked; update(); });
+    update();
+  }
+  function update() {
+    let bits = 0;
+    keys.forEach(k => { if (state[k]) bits += WT[k][0]; });
+    const crowd = Math.pow(2, bits);
+    const fmt = crowd > 1e9 ? (crowd / 1e9).toFixed(1) + ' billion' : crowd > 1e6 ? (crowd / 1e6).toFixed(1) + ' million' : crowd > 1e3 ? (crowd / 1e3).toFixed(0) + 'K' : Math.round(crowd);
+    $('#wi-uniq').textContent = '1 in ' + fmt;
+    $('#wi-fill').style.width = Math.min(100, bits / 84 * 100).toFixed(1) + '%';
+  }
+  render();
+}
+
+// ---------- incognito comparison (item 3) ----------
+function incogInit() {
+  if (R.fid) {
+    const el1 = $('#inc-id1'), el2 = $('#inc-id2');
+    if (el1) el1.textContent = R.fid;
+    if (el2) el2.textContent = R.fid;
+  }
+}
+
+// ---------- QR code (item 5) ----------
+function qrGen() {
+  const c = $('#qr'); if (!c) return;
+  const url = location.href.replace(/#.*/, '');
+  const ctx = c.getContext('2d');
+  // Simple visual QR placeholder using the URL hash
+  const W = c.width, cell = 5, size = Math.floor(W / cell);
+  ctx.fillStyle = '#0c1030';
+  ctx.fillRect(0, 0, W, W);
+  // Generate a deterministic pattern from URL
+  let seed = 0;
+  for (let i = 0; i < url.length; i++) seed = (seed * 31 + url.charCodeAt(i)) & 0x7fffffff;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  ctx.fillStyle = '#fff';
+  // Corner patterns (QR-like)
+  for (const [ox, oy] of [[0,0],[size-7,0],[0,size-7]]) {
+    for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) {
+      if (y===0||y===6||x===0||x===6||(y>=2&&y<=4&&x>=2&&x<=4))
+        ctx.fillRect((ox+x)*cell, (oy+y)*cell, cell, cell);
+    }
+  }
+  // Data area
+  for (let y = 8; y < size-8; y++) for (let x = 8; x < size; x++) {
+    if (rnd() > 0.5) ctx.fillRect(x*cell, y*cell, cell-1, cell-1);
+  }
+  for (let y = 0; y < 8; y++) for (let x = 8; x < size-8; x++) {
+    if (rnd() > 0.5) ctx.fillRect(x*cell, y*cell, cell-1, cell-1);
+  }
+  // Overlay actual URL as tiny text
+  ctx.fillStyle = '#7b6cff';
+  ctx.font = '9px monospace';
+  ctx.fillText(url.replace('https://', ''), 2, W - 4);
+}
+
+// ---------- particle trail (item 9) ----------
+function trailInit() {
+  if (mq('(prefers-reduced-motion: reduce)')) return;
+  const box = $('#ptr'); if (!box) return;
+  const dots = []; const MAX = 30;
+  document.addEventListener('pointermove', e => {
+    if (dots.length >= MAX) { const old = dots.shift(); old.remove(); }
+    const d = document.createElement('i');
+    d.className = 'trd';
+    d.style.left = e.clientX + 'px'; d.style.top = e.clientY + 'px';
+    box.appendChild(d);
+    dots.push(d);
+    setTimeout(() => { d.remove(); const idx = dots.indexOf(d); if (idx > -1) dots.splice(idx, 1); }, 800);
+  }, { passive: true });
+}
+
+// ---------- scan animation on scroll (item 8) ----------
+function scanAnim() {
+  const bento = $('#bento'); if (!bento) return;
+  const sio = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        const tiles = bento.querySelectorAll('.tile, .smalls .tile');
+        tiles.forEach((t, i) => {
+          setTimeout(() => t.classList.add('scanned'), i * 150);
+        });
+        sio.unobserve(bento);
+      }
+    });
+  }, { threshold: .1 });
+  sio.observe(bento);
+}
+
+// ---------- i18n (item 15) ----------
+const I18N = {
+  en: {},
+  ru: {
+    worth_h: 'Сколько <em>вы стоите.</em>',
+    worth_sub: 'Рекламные сети продают доступ к вам на каждой странице. Вот сколько это набегает.',
+    worth_pages: 'Страниц в день',
+    worth_cpm: 'Средний CPM',
+    worth_year: 'В год',
+    worth_note: 'Столько зарабатывают рекламные сети на отслеживании <em>одного человека</em> на <em>одном устройстве</em>. С телефоном и планшетом — в 2–3 раза больше.',
+    tl_h: 'Как вас <em>узнают.</em>',
+    tl_1: 'Первый визит', tl_1d: 'Сайт читает ваши сигналы и сохраняет хэш.',
+    tl_2: 'Отпечаток сохранён', tl_2d: 'Привязан к вашему поведению на сайте.',
+    tl_3: 'Другой сайт', tl_3d: 'Читает те же сигналы, получает тот же хэш.',
+    tl_4: 'Профили связаны', tl_4d: 'Два сайта обмениваются данными через рекламную сеть.',
+    tl_5: 'Узнают везде', tl_5d: 'Каждый партнёрский сайт знает, кто вы.',
+    wi_h: 'А если <em>отключить сигналы?</em>',
+    wi_sub: 'Переключайте сигналы и смотрите, как меняется ваша уникальность.',
+    wi_you: 'Вы',
+    wi_hint: '33 бита = 1 из 8 миллиардов (все люди на Земле)',
+    inc_normal: 'Обычный', inc_private: 'Инкогнито',
+    inc_cookies: 'Куки', inc_history: 'История', inc_fp: 'Отпечаток', inc_ip: 'IP-адрес', inc_hw: 'Железо',
+    qr_text: 'Отсканируйте телефоном, чтобы сравнить ID на разных устройствах.',
+    nav_signals: 'Что видят', nav_profile: 'Ваш профиль', nav_test: 'Приватный тест', nav_who: 'Кто это делает', nav_hide: 'Как скрыться',
+    embed_h: 'Встроить на свой сайт',
+  },
+  ua: {
+    worth_h: 'Скільки <em>ви коштуєте.</em>',
+    worth_sub: 'Рекламні мережі продають доступ до вас на кожній сторінці.',
+    worth_pages: 'Сторінок на день',
+    worth_cpm: 'Середній CPM',
+    worth_year: 'За рік',
+    worth_note: 'Стільки рекламні мережі заробляють на відстеженні <em>однієї людини</em> на <em>одному пристрої</em>. З телефоном і планшетом — у 2–3 рази більше.',
+    tl_h: 'Як вас <em>впізнають.</em>',
+    tl_1: 'Перший візит', tl_1d: 'Сайт зчитує ваші сигнали і зберігає хеш.',
+    tl_2: 'Відбиток збережено', tl_2d: 'Прив\'язаний до вашої поведінки на сайті.',
+    tl_3: 'Інший сайт', tl_3d: 'Зчитує ті ж сигнали, отримує той самий хеш.',
+    tl_4: 'Профілі пов\'язані', tl_4d: 'Два сайти обмінюються даними через рекламну мережу.',
+    tl_5: 'Впізнають скрізь', tl_5d: 'Кожен партнерський сайт знає, хто ви.',
+    wi_h: 'А якщо <em>вимкнути сигнали?</em>',
+    wi_sub: 'Перемикайте сигнали і дивіться, як змінюється ваша унікальність.',
+    wi_you: 'Ви',
+    wi_hint: '33 біти = 1 з 8 мільярдів (всі люди на Землі)',
+    inc_normal: 'Звичайний', inc_private: 'Інкогніто',
+    inc_cookies: 'Кукі', inc_history: 'Історія', inc_fp: 'Відбиток', inc_ip: 'IP-адреса', inc_hw: 'Залізо',
+    qr_text: 'Відскануйте телефоном, щоб порівняти ID на різних пристроях.',
+    nav_signals: 'Що бачать', nav_profile: 'Ваш профіль', nav_test: 'Приватний тест', nav_who: 'Хто це робить', nav_hide: 'Як сховатися',
+    embed_h: 'Вбудувати на свій сайт',
+  }
+};
+let curLang = 'en';
+function i18nInit() {
+  try { const s = localStorage.getItem('mirror-lang'); if (s && I18N[s]) curLang = s; } catch(_){}
+  const bl = (navigator.language || '').toLowerCase();
+  if (curLang === 'en') {
+    if (bl.startsWith('uk')) curLang = 'ua';
+    else if (bl.startsWith('ru')) curLang = 'ru';
+  }
+  applyLang(curLang);
+  document.querySelectorAll('.lbtn').forEach(b => {
+    b.onclick = () => { curLang = b.dataset.l; applyLang(curLang); try { localStorage.setItem('mirror-lang', curLang); } catch(_){} };
+  });
+}
+function applyLang(lang) {
+  document.querySelectorAll('.lbtn').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
+  if (lang === 'en') {
+    document.querySelectorAll('[data-i]').forEach(el => { if (el._orig) el.innerHTML = el._orig; });
+    document.documentElement.lang = 'en';
+    return;
+  }
+  const dict = I18N[lang] || {};
+  document.querySelectorAll('[data-i]').forEach(el => {
+    if (!el._orig) el._orig = el.innerHTML;
+    const k = el.dataset.i;
+    if (dict[k]) el.innerHTML = dict[k];
+  });
+  document.documentElement.lang = lang === 'ua' ? 'uk' : lang;
+}
 
 run().catch(e => { console.error(e); $('#scanstate').textContent = 'error'; $('#idmeta').textContent = e.message; });

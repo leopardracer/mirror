@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mirror. embed</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f5f6fb;--ink:#0c1030;--mute:#5b6283;--a1:#7b6cff;--a2:#4f8bff;--a3:#22c3ee;--grad:linear-gradient(100deg,var(--a1),var(--a2) 55%,var(--a3));--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#090b1f;--ink:#eef0ff;--mute:#9ba3cc}}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,sans-serif;padding:20px;min-height:100vh;display:flex;flex-direction:column}
+.card{background:linear-gradient(135deg,#1b1f50,#11143a 55%,#0d2a46);color:#e8ebff;border-radius:20px;padding:20px;flex:1;display:flex;flex-direction:column;box-shadow:0 20px 50px -20px rgba(20,25,90,.7)}
+.top{display:flex;align-items:center;gap:8px;font-size:13px;color:#aab3ff;margin-bottom:12px}
+.top svg{width:22px;height:22px}
+.id{font-family:var(--mono);font-size:clamp(22px,5vw,32px);font-weight:700;letter-spacing:.04em;background:linear-gradient(100deg,#fff,#cfe6ff 60%,#9fe9ff);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:16px}
+.facts{list-style:none;display:grid;gap:6px;flex:1}
+.facts li{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;border-bottom:1px solid #ffffff12;padding-bottom:6px}
+.facts .k{color:#9aa6e0}.facts .v{font-weight:600;text-align:right}
+.link{display:block;text-align:center;margin-top:auto;padding-top:12px;color:#7ee0ff;font-weight:600;font-size:14px;text-decoration:none}
+.link:hover{text-decoration:underline}
+.scan{color:#7ee0ff;font-size:12px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top">
+    <svg viewBox="0 0 32 32"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b6cff"/><stop offset="1" stop-color="#22c3ee"/></linearGradient></defs><circle cx="16" cy="16" r="15" fill="url(#lg)"/><path d="M8.5 17.5a7.5 7.5 0 0 1 15 0M11.5 18.5a4.5 4.5 0 0 1 9 0M16 18.5v6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <b>mirror.</b>
+    <span class="scan" id="state">scanning…</span>
+  </div>
+  <div class="id" id="fid">•••• •••• •••• ••••</div>
+  <ul class="facts" id="facts">
+    <li><span class="k">GPU</span><span class="v" id="f-gpu">…</span></li>
+    <li><span class="k">Screen</span><span class="v" id="f-scr">…</span></li>
+    <li><span class="k">Fonts</span><span class="v" id="f-fonts">…</span></li>
+    <li><span class="k">Time zone</span><span class="v" id="f-tz">…</span></li>
+    <li><span class="k">Signals</span><span class="v" id="f-sig">…</span></li>
+  </ul>
+  <a class="link" id="link" href="./" target="_blank">See full report →</a>
+</div>
+<script>
+(async () => {
+  const sha = async s => { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); };
+  const c = document.createElement('canvas'); const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+  const ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : (gl ? gl.getParameter(gl.RENDERER) : 'blocked');
+  const short = String(renderer).replace(/ANGLE \((.*)\)/, '$1').replace(/\(TM\)|\(R\)|Direct3D\S+|vs_\S+|ps_\S+|OpenGL.*|Metal.*/gi, '').split(',').map(s => s.trim()).filter(Boolean);
+  const gpu = (short.find(x => /apple|nvidia|geforce|radeon|amd|intel|adreno|mali/i.test(x)) || short.pop() || 'GPU').slice(0, 30);
+
+  c.width = 300; c.height = 80; const x = c.getContext('2d');
+  x.textBaseline = 'top'; x.font = '16px Arial';
+  const g = x.createLinearGradient(0, 0, 300, 0); g.addColorStop(0, '#f60'); g.addColorStop(1, '#09f');
+  x.fillStyle = g; x.fillRect(10, 10, 200, 30);
+  x.fillStyle = '#069'; x.fillText('mirror embed ✓ 😃', 4, 46);
+  const cvHash = (await sha(c.toDataURL())).slice(0, 8);
+
+  const FONTS = ['Arial','Calibri','Cambria','Comic Sans MS','Courier New','Georgia','Helvetica','Impact','Palatino','Tahoma','Times New Roman','Trebuchet MS','Verdana','Segoe UI','Roboto','Fira Code','JetBrains Mono'];
+  const mx = document.createElement('canvas').getContext('2d');
+  const txt = 'mmmlli1W', bases = ['monospace', 'sans-serif'];
+  const bw = bases.map(b => { mx.font = `48px ${b}`; return mx.measureText(txt).width; });
+  const fl = FONTS.filter(f => bases.some((b, i) => { mx.font = `48px "${f}", ${b}`; return mx.measureText(txt).width !== bw[i]; }));
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const scr = `${screen.width}×${screen.height}`;
+  const parts = [renderer, cvHash, fl.join(','), tz, scr, navigator.hardwareConcurrency, navigator.languages.join(',')];
+  const hash = (await sha(parts.join('|'))).toUpperCase();
+  const fid = hash.slice(0, 16).match(/.{4}/g).join(' ');
+
+  document.getElementById('fid').textContent = fid;
+  document.getElementById('f-gpu').textContent = gpu;
+  document.getElementById('f-scr').textContent = scr;
+  document.getElementById('f-fonts').textContent = fl.length + ' detected';
+  document.getElementById('f-tz').textContent = tz.split('/').pop().replace(/_/g, ' ');
+  document.getElementById('f-sig').textContent = parts.length + ' used';
+  document.getElementById('state').textContent = 'identified';
+})();
+</script>
+</body>
+</html>

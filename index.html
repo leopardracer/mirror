@@ -225,15 +225,15 @@
 
     <div class="cmp reveal" id="cmp">
       <table>
-        <thead><tr><th></th><th>Cookies</th><th>VPN</th><th>Private mode</th><th>Fingerprint</th></tr></thead>
+        <caption class="cmp-cap">What each option actually protects</caption>
+        <thead><tr><th>Does it…</th><th>Clear cookies</th><th>VPN</th><th>Private mode</th><th>Anti-fingerprint browser</th></tr></thead>
         <tbody>
-          <tr><td>Tracks across sites</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="y">✓</td></tr>
-          <tr><td>User can delete it</td><td class="y">✓</td><td>n/a</td><td class="y">✓</td><td class="n">✗</td></tr>
-          <tr><td>Survives private mode</td><td class="n">✗</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td></tr>
-          <tr><td>Hides IP address</td><td class="n">✗</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td></tr>
-          <tr><td>Works without storage</td><td class="n">✗</td><td>n/a</td><td>n/a</td><td class="y">✓</td></tr>
-          <tr><td>Hard to detect</td><td class="n">✗</td><td>n/a</td><td>n/a</td><td class="y">✓</td></tr>
+          <tr><td>Stop cookie tracking</td><td class="ok">✓</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+          <tr><td>Hide your IP address</td><td class="no">✗</td><td class="ok">✓</td><td class="no">✗</td><td class="part">Tor only</td></tr>
+          <tr><td>Stop fingerprinting</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="ok">✓ mostly</td></tr>
+          <tr><td>Change your mirror ID</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td></tr>
         </tbody>
+        <tfoot><tr><td colspan="5">Anti-fingerprint browsers: Tor Browser, Mullvad Browser, Brave (strict), Firefox with resistFingerprinting.</td></tr></tfoot>
       </table>
     </div>
     <div class="tips">

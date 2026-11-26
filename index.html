@@ -30,7 +30,6 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="grain" aria-hidden="true"></div>
-<div class="ptr" id="ptr" aria-hidden="true"></div>
 <div class="tint" id="tint" aria-hidden="true"></div>
 
 <header class="top">
@@ -169,15 +168,6 @@ devicePixelRatio; screen.colorDepth;</code></pre></details>
     <p class="note">Fonts, browser, screen and time zone use the figures measured in EFF's Panopticlick study (2010), marked ●. The rest are rough estimates; real values depend on who visits. Signals overlap, so the true total is lower than the plain sum.</p>
   </section>
 
-  <section class="band" id="whatif">
-    <h2>What if you could <em>turn signals off?</em></h2>
-    <p class="sub">Toggle signals and watch your uniqueness change.</p>
-    <div class="wi-wrap reveal">
-      <div class="wi-toggles" id="wi-toggles"></div>
-      <div class="wi-result"><span>You are</span> <b class="wi-big" id="wi-uniq">1 in …</b><div class="wi-bar"><div class="wi-fill" id="wi-fill"></div></div><p class="wi-hint">33 bits = 1 in 8 billion (everyone on Earth)</p></div>
-    </div>
-  </section>
-
   <section class="band" id="dossier">
     <h2>The profile a tracker <em>builds from this.</em></h2>
     <p class="sub">No name, no email, no IP. Just the signals above, read the way an ad network or a fraud system would read them.</p>
@@ -212,60 +202,20 @@ devicePixelRatio; screen.colorDepth;</code></pre></details>
     </div>
   </section>
 
-  <section class="band" id="timeline">
-    <h2>How you get <em>recognized.</em></h2>
-    <div class="tl-track reveal">
-      <div class="tl-step"><div class="tl-dot"></div><b>First visit</b><p>A site reads your signals and stores the hash.</p></div>
-      <div class="tl-line"></div>
-      <div class="tl-step"><div class="tl-dot"></div><b>Fingerprint stored</b><p>Linked to your browsing on that site.</p></div>
-      <div class="tl-line"></div>
-      <div class="tl-step"><div class="tl-dot"></div><b>Another site</b><p>Reads the same signals, gets the same hash.</p></div>
-      <div class="tl-line"></div>
-      <div class="tl-step"><div class="tl-dot"></div><b>Profile linked</b><p>The two sites share data through an ad network.</p></div>
-      <div class="tl-line"></div>
-      <div class="tl-step"><div class="tl-dot red"></div><b>Recognized everywhere</b><p>Every partner site knows who you are.</p></div>
+  <section class="band" id="whatif">
+    <h2>What if you could <em>turn signals off?</em></h2>
+    <p class="sub">Toggle signals and watch your uniqueness change.</p>
+    <div class="wi-wrap reveal">
+      <div class="wi-toggles" id="wi-toggles"></div>
+      <div class="wi-result"><span>You are</span> <b class="wi-big" id="wi-uniq">1 in …</b><div class="wi-bar"><div class="wi-fill" id="wi-fill"></div></div><p class="wi-hint">33 bits = 1 in 8 billion (everyone on Earth)</p></div>
     </div>
   </section>
 
-  <section class="band" id="motion">
-    <h2>Even the way you <em>move.</em></h2>
-    <p class="sub">Fraud and bot-detection scripts also record how your cursor moves. Draw on the pad with a mouse, trackpad or finger. This page has seen <b id="movecount">0</b> pointer movements since you opened it. None of it is saved or used in your ID.</p>
-    <div class="motion reveal">
-      <div class="padwrap"><canvas id="pad" role="img" aria-label="Drawing pad that traces your pointer movement"></canvas><span class="padhint" id="padhint">Move here</span></div>
-      <div class="mstats">
-        <div class="ms"><span>Average speed</span><b id="m-speed">–</b></div>
-        <div class="ms"><span>Top speed</span><b id="m-top">–</b></div>
-        <div class="ms"><span>Sharp turns</span><b id="m-turns">–</b></div>
-        <div class="ms"><span>Hesitations</span><b id="m-pauses">–</b></div>
-        <div class="ms"><span>Straightness</span><b id="m-straight">–</b></div>
-        <div class="ms"><span>Samples</span><b id="m-n">–</b></div>
-        <div class="mverdict" id="m-verdict" role="status" aria-live="polite">Waiting for movement</div>
-        <button class="btn small" id="m-clear">Clear pad</button>
-      </div>
-    </div>
-  </section>
 
-  <section class="band" id="vs">
-    <h2>Cookies you can delete. <em>This you can't.</em></h2>
-    <p class="sub">Same three steps, two ways of tracking you.</p>
-    <div class="steps" role="group" aria-label="Steps">
-      <button class="step on" data-s="0" aria-pressed="true"><i>1</i>You visit a site</button>
-      <button class="step" data-s="1" aria-pressed="false"><i>2</i>You clear cookies</button>
-      <button class="step" data-s="2" aria-pressed="false"><i>3</i>You come back</button>
-    </div>
-    <div class="vsgrid" id="vsgrid" data-s="0">
-      <article class="vs vs-cookie">
-        <div class="vs-h"><span class="vs-ico" aria-hidden="true">🍪</span><h3>Cookie</h3><span class="vs-st" id="vs-st1">Tracked</span></div>
-        <div class="win" aria-hidden="true"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><div class="jar"><span class="ck">id=8f3a2c</span></div></div></div>
-        <p id="vs-t1">The site saves a small file in your browser with an ID.</p>
-      </article>
-      <article class="vs vs-print">
-        <div class="vs-h"><span class="vs-ico" aria-hidden="true">◉</span><h3>Fingerprint</h3><span class="vs-st" id="vs-st2">Tracked</span></div>
-        <div class="win" aria-hidden="true"><div class="win-bar"><i></i><i></i><i></i></div><div class="win-body"><div class="jar"><span class="ck fp" id="vs-fp">····</span></div></div></div>
-        <p id="vs-t2">The site reads your device and computes an ID. Nothing is saved.</p>
-      </article>
-    </div>
-  </section>
+
+
+
+
 
   <section class="dark" id="test">
     <div class="dark-in">
@@ -332,34 +282,26 @@ devicePixelRatio; screen.colorDepth;</code></pre></details>
 
   <section class="band" id="hide">
     <h2>How to look <em>less unique.</em></h2>
+
+    <div class="cmp reveal">
+      <table>
+        <thead><tr><th></th><th>Cookies</th><th>VPN</th><th>Private mode</th><th>Fingerprint</th></tr></thead>
+        <tbody>
+          <tr><td>Tracks across sites</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="y">✓</td></tr>
+          <tr><td>User can delete it</td><td class="y">✓</td><td>n/a</td><td class="y">✓</td><td class="n">✗</td></tr>
+          <tr><td>Survives private mode</td><td class="n">✗</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td></tr>
+          <tr><td>Hides IP address</td><td class="n">✗</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td></tr>
+          <tr><td>Works without storage</td><td class="n">✗</td><td>n/a</td><td>n/a</td><td class="y">✓</td></tr>
+          <tr><td>Hard to detect</td><td class="n">✗</td><td>n/a</td><td>n/a</td><td class="y">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
     <div class="tips">
       <article class="reveal"><span class="n">01</span><h3>Use a browser that fights back</h3><p>Firefox with "resistFingerprinting", Brave and Tor Browser make many of these signals identical across users or add noise to them.</p></article>
       <article class="reveal"><span class="n">02</span><h3>Fewer extras, fewer fonts</h3><p>Every unusual font, extension and setting makes you stand out. A boring default browser blends into the crowd.</p></article>
       <article class="reveal"><span class="n">03</span><h3>Separate your lives</h3><p>Use different browsers or profiles for banking, work and anonymous browsing, so one fingerprint doesn't tie them together.</p></article>
       <article class="reveal"><span class="n">04</span><h3>Know the limits</h3><p>A VPN hides your IP, not your device. Private mode clears history, not your hardware. Neither changes this ID.</p></article>
     </div>
-  </section>
-  <section class="band" id="made">
-    <h2>Built in one session <em>with Claude.</em></h2>
-    <p class="sub">Claude Opus 5.5 wrote every line from a one-paragraph idea. Plain HTML, CSS and JavaScript: no frameworks, no build step, no trackers.</p>
-    <div class="made reveal">
-      <div class="mk"><b id="mk-w">…</b><span>page weight</span></div>
-      <div class="mk"><b id="mk-f">…</b><span>files</span></div>
-      <div class="mk"><b id="mk-s">…</b><span>signals read</span></div>
-      <div class="mk"><b>0</b><span>dependencies</span></div>
-      <div class="mk"><b id="mk-r">0</b><span>third-party requests</span></div>
-    </div>
-    <ol class="build">
-      <li class="reveal"><b>Idea</b><p>"Show people what a site can read about them, then make them try to hide."</p></li>
-      <li class="reveal"><b>Signals</b><p>Each signal is one small function using a standard browser API. Every one is shown under "How it's read".</p></li>
-      <li class="reveal"><b>Design</b><p>A fingerprint that draws itself from your hash, then a tracker's case file built from the same data.</p></li>
-      <li class="reveal"><b>Privacy check</b><p>The header counter watches every network request. It has to stay at 0.</p></li>
-    </ol>
-    <div class="embed-block reveal">
-      <h3>Embed on your site</h3>
-      <pre class="embed-code"><code>&lt;iframe src="embed.html" width="420" height="320" style="border:none;border-radius:16px"&gt;&lt;/iframe&gt;</code></pre>
-    </div>
-    <a class="btn hot" href="https://github.com/leopardracer/mirror" target="_blank" rel="noopener">Read the code on GitHub ↗</a>
   </section>
 </main>
 

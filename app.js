@@ -235,7 +235,7 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); bento(); dossier(); vsInit(); weights(); madeStats(); worthCalc(); whatifInit(); incogInit(); qrGen(); trailInit(); scanAnim();
+  drawPrint(hash); particles(); marquee(); bento(); dossier(); weights(); worthCalc(); scanAnim(); whatifInit(); incogInit(); qrGen();
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }
@@ -460,7 +460,6 @@ $('#json').onclick = () => {
       math: mathPrint(), storage_quota_bytes: R.quota, do_not_track: navigator.doNotTrack
     },
     inferred_profile: Object.fromEntries(R.facts.map(([k, v, c]) => [k, { value: v, confidence: c }])),
-    motion: M.n ? motionStats() : null
   };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(rep, null, 2)], { type: 'application/json' }));
@@ -491,74 +490,6 @@ $('#copyid').onclick = async () => {
   try { await navigator.clipboard.writeText(R.fid || ''); toast('ID copied. Now open this page in a private window.'); }
   catch (_) { toast('Select the ID and copy it manually'); }
 };
-
-// ---------- motion signature ----------
-const M = { pts: [], n: 0, dist: 0, top: 0, turns: 0, pauses: 0, last: null, lastAng: null, moves: 0 };
-const pad = $('#pad'), px = pad.getContext('2d');
-function sizePad() { const r = pad.getBoundingClientRect(), d = devicePixelRatio || 1; pad.width = r.width * d; pad.height = r.height * d; px.setTransform(d, 0, 0, d, 0, 0); px.lineCap = 'round'; px.lineJoin = 'round'; }
-sizePad(); addEventListener('resize', sizePad);
-addEventListener('pointermove', () => { M.moves++; }, { passive: true });
-setInterval(() => { $('#movecount').textContent = M.moves.toLocaleString(); }, 500);
-function onPad(e) {
-  const r = pad.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, t = e.timeStamp;
-  $('#padhint').hidden = true;
-  if (M.last) {
-    const dx = x - M.last.x, dy = y - M.last.y, dt = Math.max(1, t - M.last.t), d = Math.hypot(dx, dy);
-    if (d < 0.5) return;
-    const v = d / dt * 1000;
-    if (dt > 250) M.pauses++;
-    else {
-      M.dist += d; M.time = (M.time || 0) + dt; M.top = Math.max(M.top, v);
-      const ang = Math.atan2(dy, dx);
-      if (M.lastAng !== null && d > 2) { let da = Math.abs(ang - M.lastAng); if (da > Math.PI) da = 2 * Math.PI - da; if (da > Math.PI / 2) M.turns++; }
-      if (d > 2) M.lastAng = ang;
-      const hue = 250 - Math.min(1, v / 2500) * 70;
-      px.strokeStyle = `hsl(${hue} 90% 62%)`; px.lineWidth = 2 + Math.min(5, v / 600);
-      px.beginPath(); px.moveTo(M.last.x, M.last.y); px.lineTo(x, y); px.stroke();
-    }
-  }
-  M.pts.push([x, y]); if (M.pts.length > 4000) M.pts.shift();
-  M.last = { x, y, t }; M.n++;
-  if (M.n % 6 === 0) showMotion();
-}
-pad.addEventListener('pointermove', onPad);
-pad.addEventListener('pointerdown', e => { M.last = null; onPad(e); });
-pad.addEventListener('pointerleave', () => { M.last = null; M.lastAng = null; });
-function motionStats() {
-  const P = M.pts; let chord = 0;
-  if (P.length > 1) chord = Math.hypot(P[P.length - 1][0] - P[0][0], P[P.length - 1][1] - P[0][1]);
-  const avg = M.time ? M.dist / M.time * 1000 : 0;
-  return { avg_px_s: Math.round(avg), top_px_s: Math.round(M.top), sharp_turns: M.turns, hesitations: M.pauses, straightness: M.dist ? +(chord / M.dist).toFixed(2) : 0, samples: M.n };
-}
-function showMotion() {
-  const s = motionStats();
-  $('#m-speed').textContent = `${s.avg_px_s} px/s`; $('#m-top').textContent = `${s.top_px_s} px/s`;
-  $('#m-turns').textContent = s.sharp_turns; $('#m-pauses').textContent = s.hesitations;
-  $('#m-straight').textContent = `${Math.round(s.straightness * 100)}%`; $('#m-n').textContent = s.samples;
-  const v = $('#m-verdict');
-  if (s.samples < 40) { v.textContent = 'Keep moving…'; v.className = 'mverdict'; }
-  else if (s.straightness > 0.97 && s.sharp_turns === 0) { v.textContent = 'Too straight and too smooth. A bot check would flag this.'; v.className = 'mverdict bot'; }
-  else { v.textContent = 'Moves like a human. Wobbles, corrections and pauses are what bot checks look for.'; v.className = 'mverdict human'; }
-}
-$('#m-clear').onclick = () => { Object.assign(M, { pts: [], n: 0, dist: 0, time: 0, top: 0, turns: 0, pauses: 0, last: null, lastAng: null }); px.clearRect(0, 0, pad.width, pad.height); $('#padhint').hidden = false; ['#m-speed', '#m-top', '#m-turns', '#m-pauses', '#m-straight', '#m-n'].forEach(k => $(k).textContent = '–'); $('#m-verdict').textContent = 'Waiting for movement'; $('#m-verdict').className = 'mverdict'; };
-
-// ---------- cookie vs fingerprint ----------
-const VS = [
-  ['Tracked', 'The site saves a small file in your browser with an ID.', 'Tracked', 'The site reads your device and computes an ID. Nothing is saved.'],
-  ['Deleted', 'You clear cookies. The file and its ID are gone.', 'Untouched', 'There is nothing to clear. The ID was never stored.'],
-  ['Lost you', 'The site sees a brand new visitor.', 'Still you', 'Same device, same ID. The site knows you are back.'],
-];
-let vsStep = 0, vsTimer = null, vsUser = false;
-function vsSet(i) {
-  vsStep = i; const g = $('#vsgrid'); g.dataset.s = i;
-  document.querySelectorAll('.step').forEach(b => { const on = +b.dataset.s === i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  $('#vs-st1').textContent = VS[i][0]; $('#vs-t1').textContent = VS[i][1]; $('#vs-st2').textContent = VS[i][2]; $('#vs-t2').textContent = VS[i][3];
-}
-function vsInit() {
-  $('#vs-fp').textContent = R.fid.slice(0, 9);
-  if (!mq('(prefers-reduced-motion: reduce)')) vsTimer = setInterval(() => { if (!vsUser) vsSet((vsStep + 1) % 3); }, 2600);
-}
-document.querySelectorAll('.step').forEach(b => b.onclick = () => { vsUser = true; clearInterval(vsTimer); vsSet(+b.dataset.s); });
 
 // ---------- weight of each signal ----------
 // ● = measured in EFF Panopticlick (2010); others are rough estimates
@@ -609,14 +540,6 @@ function weights() {
   const top = [...rows].sort((a, b) => b.score - a.score).slice(0, 3);
   $('#top3').innerHTML = top.map(x => `<li><b>${esc(x.name)}</b><span class="tw">${esc(x.why || '≈ ' + x.b + ' bits')}</span><p>${esc(TIPS[x.k] || 'Browsers with fingerprinting protection blur this signal.')}</p></li>`).join('');
   R.top3 = top.map(x => x.name);
-}
-
-// ---------- how it's made ----------
-function madeStats() {
-  const es = [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')].filter(e => { try { return new URL(e.name).origin === location.origin; } catch (_) { return false; } });
-  const bytes = es.reduce((a, e) => a + (e.encodedBodySize || e.transferSize || 0), 0);
-  const files = new Set(es.map(e => new URL(e.name).pathname)).size;
-  $('#mk-w').textContent = bytes ? `${Math.round(bytes / 1024)} KB` : '—'; $('#mk-f').textContent = files; $('#mk-s').textContent = R.nsig;
 }
 
 // ---------- tracker view (simulation) ----------
@@ -810,22 +733,6 @@ function qrGen() {
   ctx.fillStyle = '#7b6cff';
   ctx.font = '9px monospace';
   ctx.fillText(url.replace('https://', ''), 2, W - 4);
-}
-
-// ---------- particle trail (item 9) ----------
-function trailInit() {
-  if (mq('(prefers-reduced-motion: reduce)')) return;
-  const box = $('#ptr'); if (!box) return;
-  const dots = []; const MAX = 30;
-  document.addEventListener('pointermove', e => {
-    if (dots.length >= MAX) { const old = dots.shift(); old.remove(); }
-    const d = document.createElement('i');
-    d.className = 'trd';
-    d.style.left = e.clientX + 'px'; d.style.top = e.clientY + 'px';
-    box.appendChild(d);
-    dots.push(d);
-    setTimeout(() => { d.remove(); const idx = dots.indexOf(d); if (idx > -1) dots.splice(idx, 1); }, 800);
-  }, { passive: true });
 }
 
 // ---------- scan animation on scroll (item 8) ----------

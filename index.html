@@ -110,6 +110,7 @@
           <span class="stamp" aria-label="Status: trackable">TRACKABLE</span>
         </div>
         <ul class="facts" id="facts"></ul>
+        <div class="ads"><div class="ads-h">Ads you'd likely be shown <span>example</span></div><div class="ads-row" id="ads"></div></div>
         <div class="file-foot"><span>Inferred from browser signals only. Labels show how sure a tracker would be.</span><span class="id-actions"><button class="btn small" id="json">Full report (JSON) ↓</button><button class="btn small hot" id="share2">Profile card ↓</button></span></div>
       </div>
     </div>
@@ -141,7 +142,7 @@
     <div class="wi-presets" role="group" aria-label="Browser presets"><button class="pre on" data-p="chrome" aria-pressed="true">Default Chrome</button><button class="pre" data-p="brave" aria-pressed="false">Brave Strict</button><button class="pre" data-p="firefox" aria-pressed="false">Firefox RFP</button><button class="pre" data-p="tor" aria-pressed="false">Tor Browser</button><span class="wi-note">Presets are approximate.</span></div>
     <div class="wi-wrap reveal">
       <div class="wi-toggles" id="wi-toggles"></div>
-      <div class="wi-result"><span>You are</span> <b class="wi-big" id="wi-uniq" aria-live="polite">1 in …</b><span class="wi-bitsum" id="wi-bitsum"></span><div class="wi-bar"><div class="wi-fill" id="wi-fill"></div></div><p class="wi-hint">33 bits = 1 in 8 billion (everyone on Earth)</p></div>
+      <div class="wi-result"><span>You are</span> <b class="wi-big" id="wi-uniq" aria-live="polite">1 in …</b><span class="wi-bitsum" id="wi-bitsum"></span><div class="wi-bar"><div class="wi-fill" id="wi-fill"></div></div><p class="wi-hint">33 bits = 1 in 8 billion (everyone on Earth)</p><button class="btn small hot" id="share3">Share my uniqueness ↓</button></div>
     </div>
   </section>
 
@@ -180,7 +181,7 @@
       </div>
       <div class="qr-block">
         <div class="qr-card"><canvas id="qr" width="232" height="232" role="img" aria-label="QR code that opens this page with your ID attached"></canvas></div>
-        <div><b class="qr-h">Compare with your phone</b><p>Scan with your phone. It opens with this ID attached, so your phone compares automatically.</p></div>
+        <div><b class="qr-h">Compare with your phone</b><p>Scan with your phone. It opens with this ID attached, so your phone compares automatically.</p><button class="btn small glassbtn" id="sendphone">Can't scan? Send the link instead</button></div>
       </div>
       <p class="dark-sub">Clearing cookies, private mode and most VPNs don't change these signals, because they come from your device, not from storage or your IP address.</p>
     </div>
@@ -222,6 +223,7 @@
 
   <section class="band" id="hide">
     <h2>How to look <em>less unique.</em></h2>
+    <div class="you-tip reveal" id="you-tip" hidden><div class="yt-ico" id="yt-ico" aria-hidden="true"></div><div class="yt-txt"><b id="yt-h"></b><p id="yt-p"></p></div><button class="btn small hot" id="yt-try">Try it above ↑</button></div>
 
     <div class="cmp reveal" id="cmp">
       <table>

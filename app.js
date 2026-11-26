@@ -248,7 +248,7 @@ async function run() {
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); dossier(); weights(); worthCalc(); whatifInit(); incogInit(); qrGen(); compareFromHash();
+  drawPrint(hash); particles(); marquee(); dossier(); weights(); worthCalc(); whatifInit(); incogInit(); qrGen(); compareFromHash(); adsInit(); youTip(); motionInit();
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }
@@ -441,7 +441,8 @@ const FMT = {
   sq: { W: 1080, H: 1080, ring: [850, 235, .92], ty: 470, pad: 70, fs: 1 },
   story: { W: 1080, H: 1920, ring: [540, 560, 1.75], ty: 1080, pad: 80, fs: 1.22 }
 };
-async function shareCard(profile, fmt = 'x') {
+async function shareCard(mode, fmt = 'x') {
+  const profile = mode === 'profile', uniq = mode === 'uniq';
   await document.fonts.ready;
   const L = FMT[fmt], { W, H } = L, S = 2, c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
   const x = c.getContext('2d'); x.scale(S, S);
@@ -458,18 +459,18 @@ async function shareCard(profile, fmt = 'x') {
   for (let r = 14; r < 190; r += 16) { const a = Math.PI * (0.4 + rnd() * 0.3); x.beginPath(); x.ellipse(0, 0, r * .82, r * 1.05, 0, a, a + Math.PI * (1.55 + rnd() * .3)); x.stroke(); }
   x.restore();
   const F = (w, sz, fam = '"Inter Tight", sans-serif') => `${w} ${Math.round(sz * k)}px ${fam}`;
-  x.fillStyle = '#aab3ff'; x.font = F(600, 26); x.fillText(profile ? 'What a tracker knows about me' : 'This website recognized me in ' + R.ms + ' ms', P, Y);
-  x.fillStyle = '#fff'; x.font = F(800, 64); x.fillText(profile ? 'No name. No cookies.' : 'No cookies. No login.', P, Y + 76 * k);
+  x.fillStyle = '#aab3ff'; x.font = F(600, 26); x.fillText(uniq ? 'How unique my browser is' : profile ? 'What a tracker knows about me' : 'This website recognized me in ' + R.ms + ' ms', P, Y);
+  x.fillStyle = '#fff'; x.font = F(800, 64); x.fillText(uniq ? WI.label : profile ? 'No name. No cookies.' : 'No cookies. No login.', P, Y + 76 * k);
   x.font = F('italic', 70, '"Instrument Serif", serif'); const tg = x.createLinearGradient(P, 0, P + 630 * k, 0); tg.addColorStop(0, '#9d8fff'); tg.addColorStop(1, '#5fe0ff');
-  x.fillStyle = tg; x.fillText('Still knew it was me.', P, Y + 154 * k);
+  x.fillStyle = tg; x.fillText(uniq ? 'Without a single cookie.' : 'Still knew it was me.', P, Y + 154 * k);
   x.font = F(700, 44, 'ui-monospace, Menlo, monospace'); x.fillStyle = '#e8f1ff'; x.fillText(R.fid, P, Y + 244 * k);
-  const rows = profile ? R.facts.slice(0, 5).map(f => `${f[0]}: ${f[1]}`) : [`GPU: ${shortGpu(R.g.renderer)}`, `${R.fl.length} fonts · ${R.scr.w}×${R.scr.h}`, `Time zone: ${R.tz.timeZone}`, `${R.nsig} signals read without asking`];
+  const rows = uniq ? [`${WI.bits.toFixed(1)} bits of identifying information`, `Gives me away most: ${(R.top3 || []).slice(0, 2).join(' and ')}`, WI.preset ? `Simulated as: ${WI.preset}` : `${R.nsig} signals read without asking`, `Browser: ${R.browser.split(',')[0]} on ${R.os.split(' ')[0]}`] : profile ? R.facts.slice(0, 5).map(f => `${f[0]}: ${f[1]}`) : [`GPU: ${shortGpu(R.g.renderer)}`, `${R.fl.length} fonts · ${R.scr.w}×${R.scr.h}`, `Time zone: ${R.tz.timeZone}`, `${R.nsig} signals read without asking`];
   x.font = F(500, 26); x.fillStyle = '#c8cff5';
   const maxc = fmt === 'x' ? 54 : 50;
   rows.forEach((t, i) => x.fillText(t.length > maxc ? t.slice(0, maxc - 1) + '…' : t, P, Y + 314 * k + i * 42 * k));
   x.fillStyle = '#7ee0ff'; x.font = F(700, 26); x.fillText(`Check yours → ${location.host || 'mirror'}`, P, H - 45);
   x.fillStyle = '#ffffff70'; x.font = F(600, 22); x.textAlign = 'right'; x.fillText('mirror.', W - 60, H - 45);
-  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${profile ? 'my-tracker-profile' : 'my-browser-fingerprint'}-${fmt === 'x' ? '16x9' : fmt === 'sq' ? '1x1' : '9x16'}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Card saved. Post it and see who else gets recognized.'); }, 'image/png');
+  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${uniq ? 'my-uniqueness' : profile ? 'my-tracker-profile' : 'my-browser-fingerprint'}-${fmt === 'x' ? '16x9' : fmt === 'sq' ? '1x1' : '9x16'}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Card saved. Post it and see who else gets recognized.'); }, 'image/png');
 }
 // ---------- full JSON report ----------
 $('#json').onclick = () => {
@@ -498,12 +499,13 @@ $('#json').onclick = () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Full report saved as JSON.');
 };
 
-let shareProfile = false, lastFocus = null;
+let shareMode = 'id', lastFocus = null;
 function openSheet(el) { lastFocus = document.activeElement; el.hidden = false; el.querySelector('button').focus(); }
 function closeSheet(el) { el.hidden = true; lastFocus && lastFocus.focus(); }
-$('#share1').onclick = () => { if (R.fid) { shareProfile = false; openSheet($('#fmt')); } };
-$('#share2').onclick = () => { if (R.fid) { shareProfile = true; openSheet($('#fmt')); } };
-document.querySelectorAll('.fbtn').forEach(b => b.onclick = () => { closeSheet($('#fmt')); shareCard(shareProfile, b.dataset.f); });
+$('#share1').onclick = () => { if (R.fid) { shareMode = 'id'; openSheet($('#fmt')); } };
+$('#share2').onclick = () => { if (R.fid) { shareMode = 'profile'; openSheet($('#fmt')); } };
+$('#share3').onclick = () => { if (R.fid) { shareMode = 'uniq'; openSheet($('#fmt')); } };
+document.querySelectorAll('.fbtn').forEach(b => b.onclick = () => { closeSheet($('#fmt')); shareCard(shareMode, b.dataset.f); });
 $('#fmt-x').onclick = () => closeSheet($('#fmt'));
 $('#fmt').addEventListener('click', e => { if (e.target.id === 'fmt') closeSheet($('#fmt')); });
 addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#fmt').hidden) closeSheet($('#fmt')); if (!$('#tv').hidden) closeTV(); } });
@@ -728,6 +730,9 @@ const PRESETS = {
   tor: null // everything off except a few standardized low-bit signals
 };
 const TOR_KEEP = ['input', 'prefs', 'math'];
+const WI = { bits: 0, label: '', preset: '' };
+const PRESET_NAMES = { chrome: '', brave: 'Brave Strict', firefox: 'Firefox RFP', tor: 'Tor Browser' };
+function presetBits(p) { const keys = R.idParts.filter(k => WT[k]); return keys.reduce((a, k) => a + ((p === 'tor' ? TOR_KEEP.includes(k) : !PRESETS[p].includes(k)) ? WT[k][0] : 0), 0); }
 const BIGN = [[1e24, 'septillion'], [1e21, 'sextillion'], [1e18, 'quintillion'], [1e15, 'quadrillion'], [1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million'], [1e3, 'thousand']];
 function bigName(n) {
   if (n < 1000) return Math.max(1, Math.round(n)).toLocaleString('en-US');
@@ -750,6 +755,8 @@ function whatifInit() {
     inputs.forEach(cb => { cb.checked = state[cb.dataset.k]; cb.closest('.wi-tog').classList.toggle('off', !cb.checked); });
     $('#wi-fill').style.width = Math.min(100, bits / 84 * 100).toFixed(1) + '%';
     $('#wi-fill').classList.toggle('safe', bits < 33);
+    WI.bits = bits; WI.label = 'I\'m 1 in ' + bigName(Math.pow(2, bits)) + '.';
+    $('#wi-uniq').classList.remove('bump'); void $('#wi-uniq').offsetWidth; $('#wi-uniq').classList.add('bump');
     tween(shownBits, bits, 650, v => {
       shownBits = v;
       $('#wi-uniq').textContent = '1 in ' + bigName(Math.pow(2, v));
@@ -757,12 +764,14 @@ function whatifInit() {
     });
   }
   function setPreset(p) {
+    WI.preset = p ? PRESET_NAMES[p] : '';
     document.querySelectorAll('.pre').forEach(b => { const on = b.dataset.p === p; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   }
   document.querySelectorAll('.pre').forEach(b => b.onclick = () => {
     const p = b.dataset.p, offs = PRESETS[p];
     keys.forEach(k => { state[k] = p === 'tor' ? TOR_KEEP.includes(k) : !offs.includes(k); });
     setPreset(p); update();
+    if (!RM()) inputs.forEach((cb, i) => { const l = cb.closest('.wi-tog'); l.classList.remove('flip'); setTimeout(() => { void l.offsetWidth; l.classList.add('flip'); }, i * 25); });
   });
   update();
 }
@@ -893,5 +902,69 @@ function fixThis(k) {
   addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
   upd();
 })();
+
+
+// ---------- ads a tracker would show (example) ----------
+const ADMAP = { apple_owner: ['AirPods & Apple accessories', '🎧'], premium_device: ['High-end laptops', '💻'], software_developer: ['Cloud hosting & dev tools', '⌨️'], creative_pro: ['Design software & stock photos', '🎨'], multilingual: ['Language apps & flights abroad', '✈️'], night_owl: ['Late-night food delivery', '🍕'], early_riser: ['Fitness apps & coffee subscriptions', '☕'], daytime_browser: ['Productivity software', '📈'], dark_mode_user: ['Gaming gear', '🎮'], mobile_first: ['Mobile games', '📱'], desktop_worker: ['Office chairs & monitors', '🖥️'] };
+function adsInit() {
+  const seg = segments(), out = [];
+  seg.forEach(s => { if (ADMAP[s] && out.length < 4) out.push(ADMAP[s]); });
+  const reg = seg.find(s => s.startsWith('region:'));
+  if (reg && out.length < 5) out.push([`Deals near ${R.tz.timeZone.split('/').pop().replace(/_/g, ' ')}`, '📍']);
+  $('#ads').innerHTML = out.map(([t, e], i) => `<span class="ad" style="--i:${i}"><i aria-hidden="true">${e}</i>${esc(t)}</span>`).join('');
+  onceVisible($('.ads'), () => $('.ads').classList.add('in'), .4);
+}
+
+// ---------- personal advice for this browser ----------
+function youTip() {
+  const ua = navigator.userAgent, os = R.os.split(' ')[0];
+  const isBrave = !!navigator.brave, isFF = /Firefox\//.test(ua), isEdge = /Edg\//.test(ua), isSafari = /Safari\//.test(ua) && !/Chrome|Chromium|Edg|OPR/.test(ua), isChrome = /Chrome\//.test(ua) && !isEdge && !isBrave;
+  const keys = R.idParts.filter(k => WT[k]), now = keys.reduce((a, k) => a + WT[k][0], 0);
+  const fmt = b => '1 in ' + bigName(Math.pow(2, b));
+  let name, h, p, preset;
+  if (isBrave) { name = 'Brave'; preset = 'tor'; h = `You're on Brave on ${os}. Good start.`; p = `Set Shields to "Strict" fingerprinting protection. For the strongest protection, Tor Browser would take you from ${fmt(presetBits('brave'))} to about ${fmt(presetBits('tor'))}.`; }
+  else if (isFF) { name = 'Firefox'; preset = 'firefox'; h = `You're on Firefox on ${os}.`; p = `Turn on privacy.resistFingerprinting in about:config, or use Mullvad Browser. That would take you from ${fmt(now)} to about ${fmt(presetBits('firefox'))}.`; }
+  else if (isSafari) { name = 'Safari'; preset = 'brave'; h = `You're on Safari on ${os}.`; p = `Safari's Private Browsing adds Advanced Fingerprinting Protection. For everyday browsing, Brave in strict mode would take you from ${fmt(now)} to about ${fmt(presetBits('brave'))}.`; }
+  else { name = isEdge ? 'Edge' : isChrome ? 'Chrome' : 'this browser'; preset = 'brave'; h = `You're on ${name} on ${os}, with no fingerprint protection.`; p = `Switching to Brave with strict fingerprinting protection would take you from ${fmt(now)} to about ${fmt(presetBits('brave'))}. Tor Browser would get you close to ${fmt(presetBits('tor'))}.`; }
+  $('#yt-h').textContent = h; $('#yt-p').textContent = p; $('#yt-ico').textContent = name[0];
+  $('#you-tip').hidden = false;
+  $('#yt-try').onclick = () => {
+    $('#whatif').scrollIntoView({ behavior: RM() ? 'auto' : 'smooth' });
+    setTimeout(() => { const b = document.querySelector(`.pre[data-p="${preset}"]`); b && b.click(); }, RM() ? 0 : 650);
+  };
+}
+
+// ---------- send the compare link to another device ----------
+$('#sendphone').onclick = async () => {
+  const url = $('#qr').dataset.url || location.href;
+  try {
+    if (navigator.share) { await navigator.share({ title: 'mirror. compare my ID', url }); return; }
+    await navigator.clipboard.writeText(url); toast('Link copied. Open it on your phone, it compares automatically.');
+  } catch (e) { if (e && e.name !== 'AbortError') toast('Copy this link: ' + url); }
+};
+
+// ---------- extra motion inside sections ----------
+function countUp(el) {
+  const m = el.textContent.match(/^([^\d]*)([\d.,]+)(.*)$/); if (!m) return;
+  const target = parseFloat(m[2].replace(/,/g, '')), dec = (m[2].split('.')[1] || '').length;
+  tween(0, target, 1400, v => { el.textContent = m[1] + v.toFixed(dec) + m[3]; });
+}
+function motionInit() {
+  // dossier facts appear one by one
+  onceVisible($('#facts'), () => $('#facts').classList.add('in'), .2);
+  // stat numbers count up
+  document.querySelectorAll('.stat b:not(.d)').forEach(b => { if (!RM()) onceVisible(b, () => countUp(b), .6); });
+  // comparison rows slide in
+  onceVisible($('#cmp'), () => $('#cmp').classList.add('in'), .3);
+  // tips: 3D tilt toward the pointer
+  if (!RM() && mq('(hover:hover)')) document.querySelectorAll('.tips article, .stat, .you-tip').forEach(card => {
+    card.addEventListener('pointermove', e => { const r = card.getBoundingClientRect(); card.style.setProperty('--tx', ((e.clientY - r.top) / r.height - .5) * -6 + 'deg'); card.style.setProperty('--ty', ((e.clientX - r.left) / r.width - .5) * 8 + 'deg'); card.classList.add('tilt'); });
+    card.addEventListener('pointerleave', () => card.classList.remove('tilt'));
+  });
+  // worth: the dollar figure pulses as it changes
+  ['#w-pages', '#w-dev'].forEach(id => $(id).addEventListener('input', () => { const d = $('#w-dollar'); d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); }));
+  // weight bars: one shimmer pass after they grow
+  onceVisible($('#bars'), () => setTimeout(() => $('#bars').classList.add('shine'), 1200), .3);
+}
 
 run().catch(e => { console.error(e); $('#scanstate').textContent = 'error'; $('#idmeta').textContent = e.message; });

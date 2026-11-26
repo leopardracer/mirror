@@ -6,6 +6,19 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 let slept = 0;
 const sleep = ms => { slept += ms; return new Promise(r => setTimeout(r, ms)); };
 const mq = q => matchMedia(q).matches;
+const RM = () => mq('(prefers-reduced-motion: reduce)');
+// smooth number tween; calls cb(value) every frame, final call gets exactly `to`
+function tween(from, to, dur, cb) {
+  if (RM() || dur <= 0) { cb(to); return; }
+  const t0 = performance.now();
+  const step = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3); cb(p < 1 ? from + (to - from) * e : to); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function onceVisible(el, fn, threshold = .25) {
+  if (!el || !el.isConnected) return;
+  const o = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { o.disconnect(); fn(); } }), { threshold });
+  o.observe(el);
+}
 async function sha256(str) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
@@ -227,15 +240,15 @@ async function run() {
   scramble($('#fid'), fid);
   setTimeout(() => $('#idcard').classList.add('flash'), 900);
   $('#scanstate').innerHTML = '<i class="spin"></i>match ready'; $('#scanstate').classList.add('done');
-  $('#idmeta').textContent = `${stable} signals · ${ms} ms · computed only in this tab`;
-  $('#nsig').textContent = stable; $('#ms').textContent = `${ms} ms`;
+  tween(0, 1, 1400, p => { $('#idmeta').textContent = `${Math.round(stable * p)} signals · ${Math.round(ms * p)} ms · computed only in this tab`; });
+  tween(0, stable, 1200, v => { $('#nsig').textContent = Math.round(v); });
   $('#myid').textContent = fid; $('#hwid').textContent = hwid; $('#myhw').textContent = hwid; $('#d-id').textContent = fid.slice(0, 9); $('#d-short').textContent = '#' + fid.slice(0, 4);
   $('#tg1').textContent = '🖥 ' + shortGpu(g.renderer);
   $('#tg2').textContent = '🕓 ' + tz.timeZone;
   $('#tg3').textContent = `🔤 ${fl.length} fonts found`;
   $('#tg4').textContent = `🖵 ${scr.w}×${scr.h}`;
 
-  drawPrint(hash); particles(); marquee(); dossier(); weights(); worthCalc(); scanAnim(); whatifInit(); incogInit(); qrGen();
+  drawPrint(hash); particles(); marquee(); dossier(); weights(); worthCalc(); whatifInit(); incogInit(); qrGen(); compareFromHash();
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
 function uaBrowser() { const u = navigator.userAgent; return (u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [, 'Browser', ''])[1].replace('Edg', 'Edge').replace('Version', 'Safari') + ' ' + ((u.match(/(Firefox|Edg|OPR|Chrome|Version)\/(\d+)/) || [])[2] || ''); }
@@ -264,6 +277,7 @@ function drawPrint(hash) {
     }
   }
   $('#ridges2').innerHTML = g.innerHTML;
+  setTimeout(() => g.classList.add('live'), 2600);
 }
 function particles() {
   const box = $('#particles');
@@ -402,6 +416,23 @@ function dossier() {
   const CL = { sure: 'certain', likely: 'likely', guess: 'guess' };
   $('#facts').innerHTML = F.map(([k, v, c]) => `<li><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span><span class="c ${c}">${CL[c]}</span></li>`).join('');
   R.facts = F;
+  // avatar glyph for the detected device
+  const fam = /iPhone|iPad|Mac/.test(ua) ? 'apple' : /Android/.test(ua) ? 'android' : /Win/.test(ua) ? 'win' : 'linux';
+  const AV = {
+    apple: '<path d="M40.6 33.4c0-4.6 3.8-6.8 4-6.9-2.2-3.2-5.6-3.6-6.8-3.7-2.9-.3-5.6 1.7-7.1 1.7s-3.7-1.7-6.1-1.6c-3.1 0-6 1.8-7.6 4.6-3.3 5.7-.8 14.1 2.4 18.7 1.6 2.3 3.4 4.8 5.8 4.7 2.3-.1 3.2-1.5 6-1.5s3.6 1.5 6.1 1.4c2.5 0 4.1-2.3 5.6-4.6 1.8-2.6 2.5-5.1 2.5-5.2-.1 0-4.8-1.8-4.8-7.6zM36 19.6c1.3-1.6 2.2-3.7 1.9-5.9-1.9.1-4.1 1.3-5.5 2.8-1.2 1.4-2.3 3.6-2 5.7 2.1.2 4.3-1.1 5.6-2.6z" fill="url(#avg)"/>',
+    win: '<g fill="url(#avg)"><rect x="15" y="15" width="16" height="16" rx="2"/><rect x="33" y="15" width="16" height="16" rx="2"/><rect x="15" y="33" width="16" height="16" rx="2"/><rect x="33" y="33" width="16" height="16" rx="2"/></g>',
+    android: '<rect x="20" y="10" width="24" height="44" rx="5" fill="none" stroke="url(#avg)" stroke-width="3.5"/><circle cx="32" cy="47" r="2.4" fill="url(#avg)"/><path d="M28 15h8" stroke="url(#avg)" stroke-width="3" stroke-linecap="round"/>',
+    linux: '<rect x="12" y="15" width="40" height="34" rx="6" fill="none" stroke="url(#avg)" stroke-width="3.5"/><path d="M20 27l6 5-6 5M30 38h12" stroke="url(#avg)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+  $('#avatar').innerHTML = `<svg viewBox="0 0 64 64"><defs><linearGradient id="avg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b6cff"/><stop offset="1" stop-color="#22c3ee"/></linearGradient></defs>${AV[fam]}</svg>`;
+  // how sure a tracker would be overall
+  const W = { sure: 1, likely: .7, guess: .35 };
+  const conf = Math.round(F.reduce((a, f) => a + W[f[2]], 0) / F.length * 100);
+  R.conf = conf;
+  onceVisible($('#dossier .file'), () => {
+    $('#conf-fill').style.width = conf + '%';
+    tween(0, conf, 1300, v => { $('#conf').textContent = Math.round(v) + '%'; });
+  });
 }
 
 // ---------- share card ----------
@@ -486,6 +517,15 @@ $('#otherid').addEventListener('input', e => {
   else if (v.slice(0, 16) === (R.hwid || '').replace(/ /g, '')) { box.className = 'verdict same'; box.textContent = 'Same hardware ID. Switching browsers did not hide your device.'; document.body.classList.add('caught'); chime(); }
   else { box.className = 'verdict diff'; box.textContent = 'Different ID. Your browser is resisting fingerprinting. Nice.'; }
 });
+function compareFromHash() {
+  const m = location.hash.match(/compare=([0-9A-Fa-f]{16})/);
+  if (!m) return;
+  const inp = $('#otherid');
+  inp.value = m[1].toUpperCase().match(/.{4}/g).join(' ');
+  inp.dispatchEvent(new Event('input'));
+  setTimeout(() => $('#test').scrollIntoView({ behavior: RM() ? 'auto' : 'smooth' }), 600);
+}
+addEventListener('hashchange', compareFromHash);
 $('#copyid').onclick = async () => {
   try { await navigator.clipboard.writeText(R.fid || ''); toast('ID copied. Now open this page in a private window.'); }
   catch (_) { toast('Select the ID and copy it manually'); }
@@ -535,10 +575,14 @@ function weights() {
   const rows = keys.map(k => { const [b, name, studied] = WT[k]; const [r, why] = rarity(k); return { k, name, b, studied, r, why, score: b * r }; });
   const sorted = [...rows].sort((a, b) => b.b - a.b);
   const total = rows.reduce((a, x) => a + x.b, 0);
-  $('#bars').innerHTML = sorted.map(x => `<div class="bar${x.r < .5 ? ' off' : ''}"><span class="bn">${esc(x.name)}${x.studied ? ' <i title="Measured in EFF Panopticlick">●</i>' : ''}</span><span class="bt"><span style="--w:${(x.b / 14 * 100).toFixed(1)}%"></span></span><span class="bv">≈ ${x.b} bits</span></div>`).join('')
-    + `<div class="bar total"><span class="bn">Plain sum</span><span class="bt"><span style="--w:100%"></span><i class="b33" style="left:${(33 / total * 100).toFixed(1)}%" title="33 bits: one person on Earth">33</i></span><span class="bv">≈ ${Math.round(total)} bits</span></div>`;
+  // green for weak signals, red for the ones that single you out
+  const hue = b => Math.round(145 - Math.min(1, b / 14) * 145);
+  $('#bars').innerHTML = sorted.map(x => `<div class="bar${x.r < .5 ? ' off' : ''}"><span class="bn">${esc(x.name)}${x.studied ? ' <i title="Measured in EFF Panopticlick">●</i>' : ''}</span><span class="bt"><span style="--w:${(x.b / 14 * 100).toFixed(1)}%;background:linear-gradient(90deg,hsl(${hue(x.b) + 25} 80% 52%),hsl(${hue(x.b)} 78% 50%))"></span></span><span class="bv">≈ ${x.b} bits</span></div>`).join('')
+    + `<div class="bar total"><span class="bn">Plain sum</span><span class="bt"><span style="--w:100%"></span><i class="b33" style="left:${(33 / total * 100).toFixed(1)}%" title="33 bits: one person on Earth">33</i></span><span class="bv">≈ <b id="bitsum">0</b> bits</span></div>`;
+  onceVisible($('#bars'), () => tween(0, total, 1600, v => { $('#bitsum').textContent = Math.round(v); }), .4);
   const top = [...rows].sort((a, b) => b.score - a.score).slice(0, 3);
-  $('#top3').innerHTML = top.map(x => `<li><b>${esc(x.name)}</b><span class="tw">${esc(x.why || '≈ ' + x.b + ' bits')}</span><p>${esc(TIPS[x.k] || 'Browsers with fingerprinting protection blur this signal.')}</p></li>`).join('');
+  $('#top3').innerHTML = top.map(x => `<li><b>${esc(x.name)}</b><span class="tw">${esc(x.why || '≈ ' + x.b + ' bits')}</span><p>${esc(TIPS[x.k] || 'Browsers with fingerprinting protection blur this signal.')}</p><button class="fix" data-k="${x.k}">Fix this →</button></li>`).join('');
+  $('#top3').querySelectorAll('.fix').forEach(b => b.onclick = () => fixThis(b.dataset.k));
   R.top3 = top.map(x => x.name);
 }
 
@@ -655,101 +699,199 @@ let tt;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 3400); }
 
 
-// ---------- worth calculator (item 1) ----------
+// ---------- worth calculator ----------
 function worthCalc() {
-  const sl = $('#w-pages'), pv = $('#w-pv'), yr = $('#w-year'), num = $('#w-num'), dol = $('#w-dollar');
-  const CPM = 2;
-  function calc() {
-    const p = +sl.value; pv.textContent = p;
-    const v = (p * CPM / 1000 * 365).toFixed(2);
-    yr.textContent = '$' + v; num.textContent = Math.round(+v);
+  const sl = $('#w-pages'), dv = $('#w-dev'), CPM = 2;
+  let shown = 0;
+  const money = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function calc(first) {
+    const p = +sl.value, d = +dv.value;
+    $('#w-pv').textContent = p; $('#w-dv').textContent = d;
+    // fill the track up to the thumb
+    [sl, dv].forEach(r => r.style.setProperty('--pct', ((r.value - r.min) / (r.max - r.min) * 100) + '%'));
+    const yr = p * CPM / 1000 * 365 * d;
+    $('#w-cmp').textContent = `≈ ${Math.round(yr / 4)} cups of coffee · ${(yr / 15.49).toFixed(1)} months of Netflix`;
+    $('#w-note').innerHTML = `That's what ad networks earn from tracking <em>one person</em> across <em>${d} device${d > 1 ? 's' : ''}</em> in a year.`;
+    const from = shown;
+    tween(from, yr, first ? 1400 : 450, v => { shown = v; $('#w-num').textContent = Math.round(v).toLocaleString('en-US'); $('#w-year').textContent = money(v); });
   }
-  sl.oninput = calc; calc();
+  sl.oninput = () => calc(); dv.oninput = () => calc();
+  onceVisible($('#worth .worth-calc'), () => calc(true));
+  [sl, dv].forEach(r => r.style.setProperty('--pct', ((r.value - r.min) / (r.max - r.min) * 100) + '%'));
 }
 
-// ---------- what-if slider (item 6) ----------
+// ---------- what if: toggle signals ----------
+const PRESETS = {
+  chrome: [],
+  brave: ['canvas', 'audio', 'fonts', 'hw', 'voices', 'emoji'],
+  firefox: ['canvas', 'audio', 'fonts', 'tz', 'screen', 'hw', 'gpu', 'webgpu', 'keyboard'],
+  tor: null // everything off except a few standardized low-bit signals
+};
+const TOR_KEEP = ['input', 'prefs', 'math'];
+const BIGN = [[1e24, 'septillion'], [1e21, 'sextillion'], [1e18, 'quintillion'], [1e15, 'quadrillion'], [1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million'], [1e3, 'thousand']];
+function bigName(n) {
+  if (n < 1000) return Math.max(1, Math.round(n)).toLocaleString('en-US');
+  for (const [v, w] of BIGN) if (n >= v) { const x = n / v; return `${x >= 100 ? Math.round(x) : x.toFixed(1)} ${w}`; }
+}
 function whatifInit() {
   const keys = R.idParts.filter(k => WT[k]);
-  const box = $('#wi-toggles');
-  const state = {};
+  const box = $('#wi-toggles'), state = {};
+  let shownBits = 0;
   keys.forEach(k => { state[k] = true; });
-  function render() {
-    box.innerHTML = keys.map(k => {
-      const [b, name] = WT[k];
-      return `<label class="wi-tog"><input type="checkbox" data-k="${k}" ${state[k] ? 'checked' : ''}><span>${esc(name)}</span><span class="wi-bits">${b}b</span></label>`;
-    }).join('');
-    box.querySelectorAll('input').forEach(cb => cb.onchange = () => { state[cb.dataset.k] = cb.checked; update(); });
-    update();
-  }
+  box.innerHTML = keys.map(k => {
+    const [b, name] = WT[k];
+    return `<label class="wi-tog"><input type="checkbox" class="sw-in" data-k="${k}" checked><span class="sw" aria-hidden="true"></span><span class="wi-name">${esc(name)}</span><span class="wi-bits">${b}b</span></label>`;
+  }).join('');
+  const inputs = [...box.querySelectorAll('input')];
+  inputs.forEach(cb => cb.onchange = () => { state[cb.dataset.k] = cb.checked; setPreset(null); update(); });
   function update() {
     let bits = 0;
     keys.forEach(k => { if (state[k]) bits += WT[k][0]; });
-    const crowd = Math.pow(2, bits);
-    const fmt = crowd > 1e9 ? (crowd / 1e9).toFixed(1) + ' billion' : crowd > 1e6 ? (crowd / 1e6).toFixed(1) + ' million' : crowd > 1e3 ? (crowd / 1e3).toFixed(0) + 'K' : Math.round(crowd);
-    $('#wi-uniq').textContent = '1 in ' + fmt;
+    inputs.forEach(cb => { cb.checked = state[cb.dataset.k]; cb.closest('.wi-tog').classList.toggle('off', !cb.checked); });
     $('#wi-fill').style.width = Math.min(100, bits / 84 * 100).toFixed(1) + '%';
-  }
-  render();
-}
-
-// ---------- incognito comparison (item 3) ----------
-function incogInit() {
-  if (R.fid) {
-    const el1 = $('#inc-id1'), el2 = $('#inc-id2');
-    if (el1) el1.textContent = R.fid;
-    if (el2) el2.textContent = R.fid;
-  }
-}
-
-// ---------- QR code (item 5) ----------
-function qrGen() {
-  const c = $('#qr'); if (!c) return;
-  const url = location.href.replace(/#.*/, '');
-  const ctx = c.getContext('2d');
-  // Simple visual QR placeholder using the URL hash
-  const W = c.width, cell = 5, size = Math.floor(W / cell);
-  ctx.fillStyle = '#0c1030';
-  ctx.fillRect(0, 0, W, W);
-  // Generate a deterministic pattern from URL
-  let seed = 0;
-  for (let i = 0; i < url.length; i++) seed = (seed * 31 + url.charCodeAt(i)) & 0x7fffffff;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  ctx.fillStyle = '#fff';
-  // Corner patterns (QR-like)
-  for (const [ox, oy] of [[0,0],[size-7,0],[0,size-7]]) {
-    for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) {
-      if (y===0||y===6||x===0||x===6||(y>=2&&y<=4&&x>=2&&x<=4))
-        ctx.fillRect((ox+x)*cell, (oy+y)*cell, cell, cell);
-    }
-  }
-  // Data area
-  for (let y = 8; y < size-8; y++) for (let x = 8; x < size; x++) {
-    if (rnd() > 0.5) ctx.fillRect(x*cell, y*cell, cell-1, cell-1);
-  }
-  for (let y = 0; y < 8; y++) for (let x = 8; x < size-8; x++) {
-    if (rnd() > 0.5) ctx.fillRect(x*cell, y*cell, cell-1, cell-1);
-  }
-  // Overlay actual URL as tiny text
-  ctx.fillStyle = '#7b6cff';
-  ctx.font = '9px monospace';
-  ctx.fillText(url.replace('https://', ''), 2, W - 4);
-}
-
-// ---------- scan animation on scroll (item 8) ----------
-function scanAnim() {
-  const bento = $('#bento'); if (!bento) return;
-  const sio = new IntersectionObserver(es => {
-    es.forEach(e => {
-      if (e.isIntersecting) {
-        const tiles = bento.querySelectorAll('.tile, .smalls .tile');
-        tiles.forEach((t, i) => {
-          setTimeout(() => t.classList.add('scanned'), i * 150);
-        });
-        sio.unobserve(bento);
-      }
+    $('#wi-fill').classList.toggle('safe', bits < 33);
+    tween(shownBits, bits, 650, v => {
+      shownBits = v;
+      $('#wi-uniq').textContent = '1 in ' + bigName(Math.pow(2, v));
+      $('#wi-bitsum').textContent = `${v.toFixed(1)} bits · ${v >= 33 ? 'unique among everyone on Earth' : 'you blend into a crowd'}`;
     });
-  }, { threshold: .1 });
-  sio.observe(bento);
+  }
+  function setPreset(p) {
+    document.querySelectorAll('.pre').forEach(b => { const on = b.dataset.p === p; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  }
+  document.querySelectorAll('.pre').forEach(b => b.onclick = () => {
+    const p = b.dataset.p, offs = PRESETS[p];
+    keys.forEach(k => { state[k] = p === 'tor' ? TOR_KEEP.includes(k) : !offs.includes(k); });
+    setPreset(p); update();
+  });
+  update();
 }
+
+// ---------- incognito comparison ----------
+function incogInit() {
+  const el1 = $('#inc-id1'), el2 = $('#inc-id2'), id = R.fid || '';
+  el1.textContent = el2.textContent = RM() ? id : '';
+  onceVisible($('.incog-compare'), () => {
+    if (RM()) return;
+    let i = 0;
+    [el1, el2].forEach(e => e.classList.add('typing'));
+    const t = setInterval(() => {
+      i++; el1.textContent = el2.textContent = id.slice(0, i);
+      if (i % 2) click();
+      if (i >= id.length) { clearInterval(t); [el1, el2].forEach(e => e.classList.remove('typing')); $('.incog-compare').classList.add('matched'); }
+    }, 55);
+  }, .5);
+  onceVisible($('.inc-table'), () => $('.inc-table').classList.add('in'), .5);
+}
+
+// ---------- QR code (real encoder: byte mode, ECC level M, versions 1-10) ----------
+const QR = (() => {
+  const ECC = [0, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26], BLK = [0, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5];
+  const ALIGN = [0, [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50]];
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z; };
+  const rawModules = v => { let r = (16 * v + 128) * v + 64; if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55; if (v >= 7) r -= 36; } return r; };
+  const dataCw = v => Math.floor(rawModules(v) / 8) - ECC[v] * BLK[v];
+  function rsDivisor(deg) { const r = new Array(deg).fill(0); r[deg - 1] = 1; let root = 1; for (let i = 0; i < deg; i++) { for (let j = 0; j < r.length; j++) { r[j] = mul(r[j], root); if (j + 1 < r.length) r[j] ^= r[j + 1]; } root = mul(root, 2); } return r; }
+  function rsRem(data, div) { const r = div.map(() => 0); for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => r[i] ^= mul(c, f)); } return r; }
+  return function encode(text) {
+    const bytes = [...new TextEncoder().encode(text)];
+    let ver = 1; while (ver <= 10 && 4 + (ver < 10 ? 8 : 16) + bytes.length * 8 > dataCw(ver) * 8) ver++;
+    if (ver > 10) throw new Error('QR: text too long');
+    const bits = [], put = (v, n) => { for (let i = n - 1; i >= 0; i--) bits.push((v >>> i) & 1); };
+    put(4, 4); put(bytes.length, ver < 10 ? 8 : 16); bytes.forEach(b => put(b, 8));
+    const cap = dataCw(ver) * 8;
+    put(0, Math.min(4, cap - bits.length)); put(0, (8 - bits.length % 8) % 8);
+    for (let p = 0xEC; bits.length < cap; p ^= 0xEC ^ 0x11) put(p, 8);
+    const data = []; for (let i = 0; i < bits.length; i += 8) data.push(bits.slice(i, i + 8).reduce((a, b) => a << 1 | b, 0));
+    // split into blocks, add error correction, interleave
+    const nb = BLK[ver], ecl = ECC[ver], raw = Math.floor(rawModules(ver) / 8), nShort = nb - raw % nb, shortLen = Math.floor(raw / nb), div = rsDivisor(ecl), blocks = [];
+    for (let i = 0, k = 0; i < nb; i++) { const d = data.slice(k, k + shortLen - ecl + (i < nShort ? 0 : 1)); k += d.length; const e = rsRem(d, div); if (i < nShort) d.push(0); blocks.push(d.concat(e)); }
+    const cw = []; for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== shortLen - ecl || j >= nShort) cw.push(b[i]); });
+    // module grid
+    const N = ver * 4 + 17, M = [...Array(N)].map(() => Array(N).fill(false)), F = [...Array(N)].map(() => Array(N).fill(false));
+    const set = (x, y, d) => { M[y][x] = d; F[y][x] = true; };
+    for (let i = 0; i < N; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+    for (const [cx, cy] of [[3, 3], [N - 4, 3], [3, N - 4]]) for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const x = cx + dx, y = cy + dy, d = Math.max(Math.abs(dx), Math.abs(dy)); if (x >= 0 && x < N && y >= 0 && y < N) set(x, y, d !== 2 && d !== 4); }
+    const al = ALIGN[ver], L = al.length;
+    for (let i = 0; i < L; i++) for (let j = 0; j < L; j++) { if ((i === 0 && j === 0) || (i === 0 && j === L - 1) || (i === L - 1 && j === 0)) continue; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(al[i] + dx, al[j] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); }
+    const format = mask => {
+      const d = (0 << 3) | mask; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+      const b = ((d << 10) | r) ^ 0x5412, g = i => ((b >>> i) & 1) === 1;
+      for (let i = 0; i <= 5; i++) set(8, i, g(i));
+      set(8, 7, g(6)); set(8, 8, g(7)); set(7, 8, g(8));
+      for (let i = 9; i < 15; i++) set(14 - i, 8, g(i));
+      for (let i = 0; i < 8; i++) set(N - 1 - i, 8, g(i));
+      for (let i = 8; i < 15; i++) set(8, N - 15 + i, g(i));
+      set(8, N - 8, true);
+    };
+    format(0);
+    if (ver >= 7) { let r = ver; for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25); const b = ver << 12 | r; for (let i = 0; i < 18; i++) { const bit = ((b >>> i) & 1) === 1, a = N - 11 + i % 3, c = Math.floor(i / 3); set(a, c, bit); set(c, a, bit); } }
+    let k = 0;
+    for (let right = N - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      for (let v = 0; v < N; v++) for (let j = 0; j < 2; j++) {
+        const x = right - j, up = ((right + 1) & 2) === 0, y = up ? N - 1 - v : v;
+        if (!F[y][x] && k < cw.length * 8) { M[y][x] = ((cw[k >>> 3] >>> (7 - (k & 7))) & 1) === 1; k++; }
+      }
+    }
+    const MASKS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0, (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0, (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+    const applyMask = m => { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!F[y][x] && MASKS[m](x, y)) M[y][x] = !M[y][x]; };
+    const penalty = () => {
+      let p = 0, dark = 0;
+      for (let a = 0; a < 2; a++) for (let i = 0; i < N; i++) { let run = 1; for (let j = 1; j <= N; j++) { const cur = j < N && (a ? M[j][i] : M[i][j]), prev = a ? M[j - 1][i] : M[i][j - 1]; if (j < N && cur === prev) run++; else { if (run >= 5) p += run - 2; run = 1; } } }
+      for (let y = 0; y < N - 1; y++) for (let x = 0; x < N - 1; x++) { const c = M[y][x]; if (c === M[y][x + 1] && c === M[y + 1][x] && c === M[y + 1][x + 1]) p += 3; }
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (M[y][x]) dark++;
+      return p + Math.floor(Math.abs(dark * 20 - N * N * 10) / (N * N)) * 10;
+    };
+    let best = 0, bestP = Infinity;
+    for (let m = 0; m < 8; m++) { applyMask(m); format(m); const pn = penalty(); if (pn < bestP) { bestP = pn; best = m; } applyMask(m); }
+    applyMask(best); format(best);
+    return M;
+  };
+})();
+function qrGen() {
+  const c = $('#qr'); if (!c.getContext) return;
+  const base = location.href.replace(/#.*/, '');
+  const url = `${base}#compare=${(R.fid || '').replace(/ /g, '')}`;
+  let M; try { M = QR(url); } catch (_) { M = QR(base); }
+  const N = M.length, q = 4, k = Math.max(2, devicePixelRatio || 1), css = 232, cell = css / (N + q * 2);
+  c.width = css * k; c.height = css * k;
+  const x = c.getContext('2d'); x.scale(k, k);
+  x.fillStyle = '#fff'; x.fillRect(0, 0, css, css);
+  x.fillStyle = '#0c1030';
+  for (let r = 0; r < N; r++) for (let col = 0; col < N; col++) if (M[r][col]) x.fillRect((col + q) * cell, (r + q) * cell, cell + .35, cell + .35);
+  c.dataset.url = url;
+}
+
+// ---------- weight → fix this ----------
+const FIXMAP = { fonts: 2, voices: 2, emoji: 2, keyboard: 2, lang: 3, browser: 1, canvas: 1, audio: 1, gpu: 1, hw: 1, screen: 1, tz: 4, webgpu: 1 };
+function fixThis(k) {
+  const tip = $('#tip-' + (FIXMAP[k] || 1));
+  $('#hide').scrollIntoView({ behavior: RM() ? 'auto' : 'smooth', block: 'start' });
+  setTimeout(() => {
+    [tip, $('#cmp')].forEach(el => { el.classList.remove('hl'); void el.offsetWidth; el.classList.add('hl'); });
+    setTimeout(() => [tip, $('#cmp')].forEach(el => el.classList.remove('hl')), 2600);
+  }, RM() ? 0 : 700);
+}
+
+// ---------- comparison table: column hover ----------
+(() => {
+  const t = document.querySelector('.cmp table'); if (!t) return;
+  const cells = [...t.querySelectorAll('th,td')];
+  const clear = () => cells.forEach(c => c.classList.remove('col'));
+  t.addEventListener('mouseover', e => {
+    const c = e.target.closest('th,td'); if (!c || c.cellIndex === 0) return clear();
+    clear(); t.querySelectorAll('tr').forEach(r => r.cells[c.cellIndex] && r.cells[c.cellIndex].classList.add('col'));
+  });
+  t.addEventListener('mouseleave', clear);
+})();
+
+// ---------- scroll progress ----------
+(() => {
+  const bar = $('#prog'); let raf = 0;
+  const upd = () => { raf = 0; const h = document.documentElement, max = h.scrollHeight - h.clientHeight; bar.style.transform = `scaleX(${max > 0 ? h.scrollTop / max : 0})`; };
+  addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+  upd();
+})();
 
 run().catch(e => { console.error(e); $('#scanstate').textContent = 'error'; $('#idmeta').textContent = e.message; });
